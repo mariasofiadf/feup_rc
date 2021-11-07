@@ -13,6 +13,28 @@
 
 volatile int STOP=FALSE;
 
+int issuer_connect (int fd, char * buf[]){
+    struct trama_s trama_set;
+    trama_set.A = A_ISSUER;
+    trama_set.F = FLAG;
+    trama_set.C = SET;
+    trama_set.BCC = trama_set.A ^ trama_set.C;
+
+    if(write(fd,&trama_set,sizeof(trama_set)) <= 0)
+        return 1;
+    printf("[issuer] send trama-> F: %x A: %x C: %x BCC: %x\n", trama_set.F, trama_set.A, trama_set.C, trama_set.BCC);
+    
+    struct trama_s trama_res;
+    read(fd,&trama_res,sizeof(trama_set));
+    printf("[issuer] received trama: F: %x A: %x C: %x BCC: %x\n", trama_res.F, trama_res.A, trama_res.C, trama_res.BCC);
+    if((trama_res.A ^ trama_res.C) != trama_res.BCC){
+        printf("[issuer] BCC invalid\n");
+        return 1;
+    }
+    
+    return 0;
+}
+
 int main(int argc, char** argv)
   {
   int fd,c, res;
@@ -71,12 +93,20 @@ int main(int argc, char** argv)
 
 
 
+  if(issuer_connect(fd, buf)){
+      perror("[issuer] Connect failed!");       
+      return -1;
+  }
+
+
+  /*
   //for (i = 0; i < 255; i++) {
 
   gets(buf);
 
-  /*testing*/
   //buf[25] = '\n';
+
+  
 
   res = write(fd,buf,strlen(buf)+1);
   //printf("%d bytes written\n", res);
@@ -87,17 +117,14 @@ int main(int argc, char** argv)
 
 
   int x = 0;
-  while (STOP==FALSE) { /* loop for input */
-  res = read(fd,&buf[x],1); /* returns after 5 chars have been input */
-  /* so we can printf... */
+  while (STOP==FALSE) { 
+  res = read(fd,&buf[x],1); 
   if (buf[x]=='\0') STOP=TRUE;
   x++;
   }
 
   printf("%s\n", buf, res);
-  /*
-  O ciclo FOR e as instru珲es seguintes devem ser alterados de modo a respeitar
-  o indicado no gui鉶
+
   */
 
 

@@ -10,8 +10,26 @@
 
 #define BAUDRATE B38400
 
-
 volatile int STOP=FALSE;
+
+int receiver_connect (int fd, char * buf[]){
+    struct trama_s trama_set;
+    read(fd,&trama_set,sizeof(trama_set));
+    printf("[receiver] received trama: F: %x A: %x C: %x BCC: %x \n", trama_set.F, trama_set.A, trama_set.C, trama_set.BCC);
+    if((trama_set.A ^ trama_set.C) != trama_set.BCC){
+        printf("[receiver] BCC invalid %x ; %x \n");
+    }
+    
+    struct trama_s trama_ua = trama_set;
+    trama_ua.C = UA;
+    trama_ua.BCC = trama_ua.A ^ trama_ua.C;
+    if(write(fd,&trama_ua,sizeof(trama_ua)) <= 0)
+        return 1;
+    printf("[receiver] sent trama-> F: %x A: %x C: %x BCC: %x\n", trama_ua.F, trama_ua.A, trama_ua.C, trama_ua.BCC);
+    
+    return 0;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -66,6 +84,12 @@ int main(int argc, char** argv)
     exit(-1);
     }
 
+    if(receiver_connect(fd, buf)){
+        perror("[receiver] Connect failed!");       
+        return -1;
+    }
+
+    /*
     printf("New termios structure set\n");
     int i = 0;
     while (STOP==FALSE) { // loop for input /
@@ -76,19 +100,11 @@ int main(int argc, char** argv)
     }
     printf("%s\n", buf);
 
-    /*
-    O ciclo WHILE deve ser alterado de modo a respeitar o indicado no gui�o
-    */
-
-    /*
-    Devolu��o da palavra
-    */
-
     res = write(fd,buf,255);
     for(int i = 0; i < strlen(buf); i++){
         write(fd,buf[i],1);
     }
-
+    */    
 
     sleep(1);
     tcsetattr(fd,TCSANOW,&oldtio);
