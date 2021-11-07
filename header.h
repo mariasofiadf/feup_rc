@@ -15,6 +15,7 @@
 #define RR 0b00000101
 #define REJ 0b00000001
 
+#include <stdlib.h>
 
 struct trama_s
 {

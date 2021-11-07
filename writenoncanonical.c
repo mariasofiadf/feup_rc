@@ -13,26 +13,38 @@
 
 volatile int STOP=FALSE;
 
-int issuer_connect (int fd, char * buf[]){
-    struct trama_s trama_set;
-    trama_set.A = A_ISSUER;
-    trama_set.F = FLAG;
-    trama_set.C = SET;
-    trama_set.BCC = trama_set.A ^ trama_set.C;
 
-    if(write(fd,&trama_set,sizeof(trama_set)) <= 0)
-        return 1;
-    printf("[issuer] send trama-> F: %x A: %x C: %x BCC: %x\n", trama_set.F, trama_set.A, trama_set.C, trama_set.BCC);
+int wait_ua_message(int fd, char * buf[], struct trama_s * trama_ua){
+  read(fd,trama_ua, sizeof(trama_ua));
+  printf("[issuer] received trama: F: %x A: %x C: %x BCC: %x\n", trama_ua->F, trama_ua->A, trama_ua->C, trama_ua->BCC);
+  if((trama_ua->A ^ trama_ua->C) != trama_ua->BCC){
+    printf("[issuer] BCC invalid\n");
+    return 1;
+  }
+}
+
+int send_set_message(int fd, char * buf, struct trama_s * trama_set){
+  trama_set->A = A_ISSUER;
+  trama_set->F = FLAG;
+  trama_set->C = SET;
+  trama_set->BCC = trama_set->A ^ trama_set->C;
+
+  if(write(fd,trama_set,sizeof(trama_set)) <= 0)
+     return 1;
+  printf("[issuer] send trama-> F: %x A: %x C: %x BCC: %x\n", trama_set->F, trama_set->A, trama_set->C, trama_set->BCC);
     
-    struct trama_s trama_res;
-    read(fd,&trama_res,sizeof(trama_set));
-    printf("[issuer] received trama: F: %x A: %x C: %x BCC: %x\n", trama_res.F, trama_res.A, trama_res.C, trama_res.BCC);
-    if((trama_res.A ^ trama_res.C) != trama_res.BCC){
-        printf("[issuer] BCC invalid\n");
-        return 1;
-    }
+}
+
+int issuer_connect (int fd, char * buf[]){
     
-    return 0;
+  struct trama_s * trama = malloc(sizeof(struct trama_s));
+  send_set_message(fd, buf, trama);
+
+  wait_ua_message(fd, buf, trama);
+
+  free(trama);
+    
+  return 0;
 }
 
 int main(int argc, char** argv)

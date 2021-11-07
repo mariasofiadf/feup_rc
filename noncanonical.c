@@ -12,21 +12,33 @@
 
 volatile int STOP=FALSE;
 
-int receiver_connect (int fd, char * buf[]){
-    struct trama_s trama_set;
-    read(fd,&trama_set,sizeof(trama_set));
-    printf("[receiver] received trama: F: %x A: %x C: %x BCC: %x \n", trama_set.F, trama_set.A, trama_set.C, trama_set.BCC);
-    if((trama_set.A ^ trama_set.C) != trama_set.BCC){
-        printf("[receiver] BCC invalid %x ; %x \n");
+int wait_set_message(int fd, char * buf[], struct trama_s * trama_set ){
+    read(fd,trama_set,sizeof(trama_set));
+    printf("[receiver] received trama: F: %x A: %x C: %x BCC: %x \n", trama_set->F, trama_set->A, trama_set->C, trama_set->BCC);
+    if((trama_set->A ^ trama_set->C) != trama_set->BCC){
+        printf("[receiver] BCC invalid\n");
     }
-    
-    struct trama_s trama_ua = trama_set;
-    trama_ua.C = UA;
-    trama_ua.BCC = trama_ua.A ^ trama_ua.C;
-    if(write(fd,&trama_ua,sizeof(trama_ua)) <= 0)
+}
+
+int send_ua_message(int fd, char * buf, struct trama_s * trama_ua){
+    trama_ua->C = UA;
+    trama_ua->BCC = trama_ua->A ^ trama_ua->C;
+    if(write(fd,trama_ua,sizeof(trama_ua)) <= 0)
         return 1;
-    printf("[receiver] sent trama-> F: %x A: %x C: %x BCC: %x\n", trama_ua.F, trama_ua.A, trama_ua.C, trama_ua.BCC);
+    printf("[receiver] sent trama-> F: %x A: %x C: %x BCC: %x\n", trama_ua->F, trama_ua->A, trama_ua->C, trama_ua->BCC);
     
+}
+
+int receiver_connect (int fd, char * buf[]){
+
+    struct trama_s * trama = malloc(sizeof(struct trama_s));
+
+    wait_set_message(fd, buf, trama);
+
+    send_ua_message(fd, buf, trama);
+
+    free(trama);
+
     return 0;
 }
 
