@@ -5,6 +5,8 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <stdio.h>
+#include<signal.h>
+
 
 #include "header.h"
 
@@ -13,14 +15,18 @@
 
 volatile int STOP=FALSE;
 
+int flag = 1, try = 0;
 
 int wait_ua_message(int fd, char * buf[], struct trama_s * trama_ua){
-  read(fd,trama_ua, sizeof(trama_ua));
+  if(read(fd,trama_ua, sizeof(trama_ua)) <= 0)
+    return 1;
   printf("[issuer] received trama: F: %x A: %x C: %x BCC: %x\n", trama_ua->F, trama_ua->A, trama_ua->C, trama_ua->BCC);
   if((trama_ua->A ^ trama_ua->C) != trama_ua->BCC){
     printf("[issuer] BCC invalid\n");
     return 1;
   }
+  try = 3;
+  return 0;
 }
 
 int send_set_message(int fd, char * buf, struct trama_s * trama_set){
@@ -32,15 +38,36 @@ int send_set_message(int fd, char * buf, struct trama_s * trama_set){
   if(write(fd,trama_set,sizeof(trama_set)) <= 0)
      return 1;
   printf("[issuer] send trama-> F: %x A: %x C: %x BCC: %x\n", trama_set->F, trama_set->A, trama_set->C, trama_set->BCC);
-    
+  return 0;
+}
+
+
+void sig_handler(int signum){
+  printf("[issuer] time is up\n");
+  flag = 1;
+  try++;
 }
 
 int issuer_connect (int fd, char * buf[]){
     
   struct trama_s * trama = malloc(sizeof(struct trama_s));
-  send_set_message(fd, buf, trama);
 
-  wait_ua_message(fd, buf, trama);
+  signal(SIGALRM,sig_handler); // Register signal handler
+ 
+  while (try < 3)
+  {
+    if(flag){
+      alarm(3);
+      flag = 0;
+      printf("[issuer] alarm set\n");
+      send_set_message(fd, buf, trama);
+      wait_ua_message(fd, buf, trama);
+    }
+  }
+  if(flag){
+    free(trama);
+    return 1;
+  }
 
   free(trama);
     
@@ -82,8 +109,8 @@ int main(int argc, char** argv)
   /* set input mode (non-canonical, no echo,...) */
   newtio.c_lflag = 0;
 
-  newtio.c_cc[VTIME] = 0; /* inter-character timer unused */
-  newtio.c_cc[VMIN] = 1; /* blocking read until 5 chars received */
+  newtio.c_cc[VTIME] = 1; /* inter-character timer unused */
+  newtio.c_cc[VMIN] = 0; /* blocking read until 5 chars received */
 
 
 
