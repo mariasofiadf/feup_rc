@@ -30,7 +30,7 @@ struct trama_i
     char F;
     char A;
     char C;
-    char * D;
+    unsigned char * D;
     char BCC;  
 };
 

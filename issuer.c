@@ -30,14 +30,25 @@ int wait_ua_message(int fd, char * buf[], struct trama_s * trama_ua){
 }
 
 int send_set_message(int fd, char * buf, struct trama_s * trama_set){
-  trama_set->A = A_ISSUER;
-  trama_set->F = FLAG;
-  trama_set->C = SET;
-  trama_set->BCC = trama_set->A ^ trama_set->C;
-
-  if(write(fd,trama_set,sizeof(trama_set)) <= 0)
+  char a = A_ISSUER, flag = FLAG, c = SET;
+  if(write(fd,&flag,1) <= 0)
+    return 1;
+  printf("WRITE F");
+  if(write(fd,&a,1) <= 0)
      return 1;
-  printf("[issuer] send trama-> F: %x A: %x C: %x BCC: %x\n", trama_set->F, trama_set->A, trama_set->C, trama_set->BCC);
+  printf("WRITE A");
+  if(write(fd,&c,1) <= 0)
+    return 1;
+    
+  printf("WRITE c");
+  char BCC = A_ISSUER ^ SET;
+  if(write(fd,&BCC,1) <= 0)
+    return 1;
+  printf("WRITE bcc");
+  if(write(fd,&flag,1) <= 0)
+    return 1;
+  printf("WRITE F");
+  printf("[issuer] send trama-> F: %x A: %x C: %x BCC: %x\n", FLAG, A_ISSUER, SET, BCC);
   return 0;
 }
 
@@ -64,35 +75,19 @@ int issuer_connect (int fd, char * buf[]){
       wait_ua_message(fd, buf, trama);
     }
   }
-  if(flag){
-    free(trama);
-    return 1;
-  }
 
   free(trama);
-    
+  
+  if(flag)
+    return 1;
+      
   return 0;
 }
 
-int main(int argc, char** argv)
-  {
+struct termios oldtio,newtio;
+
+int inner_open(char** argv){
   int fd,c, res;
-  struct termios oldtio,newtio;
-  char buf[255];
-  int i, sum = 0, speed = 0;
-
-  if ( (argc < 2) ) {
-    printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
-    exit(1);
-  }
-
-
-  /*
-  Open serial port device for reading and writing and not as controlling tty
-  because we don't want to get killed if linenoise sends CTRL-C.
-  */
-
-
   fd = open(argv[1], O_RDWR | O_NOCTTY );
   if (fd <0) {perror(argv[1]); exit(-1); }
 
@@ -112,8 +107,6 @@ int main(int argc, char** argv)
   newtio.c_cc[VTIME] = 1; /* inter-character timer unused */
   newtio.c_cc[VMIN] = 0; /* blocking read until 5 chars received */
 
-
-
   /*
   VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
   leitura do(s) pr髕imo(s) caracter(es)
@@ -130,7 +123,32 @@ int main(int argc, char** argv)
 
   printf("New termios structure set\n");
 
+  return fd;
+}
 
+int llopen(int porta, int type){ // type is TRANSMITTER OR RECEIVER
+
+  return 0;
+}
+
+
+int main(int argc, char** argv)
+  {
+  char buf[255];
+  int i, sum = 0, speed = 0;
+
+  if ( (argc < 2) ) {
+    printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
+    exit(1);
+  }
+
+
+  /*
+  Open serial port device for reading and writing and not as controlling tty
+  because we don't want to get killed if linenoise sends CTRL-C.
+  */
+
+  int fd = inner_open(argv);
 
   if(issuer_connect(fd, buf)){
       perror("[issuer] Connect failed!");       

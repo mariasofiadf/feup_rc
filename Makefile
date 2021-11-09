@@ -1,10 +1,10 @@
 all: send receiver
 
-send: writenoncanonical.c
-	gcc -o send writenoncanonical.c
+send: issuer.c
+	gcc -o issuer issuer.c
 
-receiver: noncanonical.c
-	gcc -o receiver noncanonical.c
+receiver: receiver.c
+	gcc -o receiver receiver.c
 
 clean:
-	rm send receiver
+	rm issuer receiver

@@ -12,12 +12,76 @@
 
 volatile int STOP=FALSE;
 
-int wait_set_message(int fd, char * buf[], struct trama_s * trama_set ){
-    read(fd,trama_set,sizeof(trama_set));
-    printf("[receiver] received trama: F: %x A: %x C: %x BCC: %x \n", trama_set->F, trama_set->A, trama_set->C, trama_set->BCC);
-    if((trama_set->A ^ trama_set->C) != trama_set->BCC){
-        printf("[receiver] BCC invalid\n");
+enum state {
+    START,
+    FLAG_RCV,
+    A_RCV,
+    C_RCV,
+    BCC_OK,
+    STOP_ST
+};
+
+int wait_set_message(int fd, char * buf[]){
+    printf("ENTERED W8 SET MESSAGE\n");
+    char rcv;
+    int finished = 0;
+    char a, c;
+    enum state state = START; 
+    while(!finished){
+        read(fd,&rcv,1);
+        switch (state)
+        {
+        case START:
+            printf("START\n");
+            if(rcv == FLAG)
+                state = FLAG_RCV;
+            break;
+        case FLAG_RCV:
+            printf("FLAG_RCV\n");
+            if(rcv == A_ISSUER){
+                a = rcv;
+                state = A_RCV;
+            }
+            else if(rcv != FLAG)
+                state = START;
+            break;
+        case A_RCV:
+            printf("A_RCV\n");
+            if(rcv == SET){
+                c = rcv;
+                state = C_RCV;
+            }              
+            else if(rcv == FLAG)
+                state = FLAG_RCV;
+            /*else
+                state = START;*/
+            break;
+        case C_RCV:
+            printf("C_RCV\n");
+            if(rcv == FLAG)
+                state = FLAG_RCV;
+            else if( rcv == (a ^ c))
+                state = BCC_OK;
+            /*else
+                state = START;*/
+            break;
+        case BCC_OK:
+            printf("BCC_OK\n");
+            if(rcv == FLAG)
+                state = STOP_ST;
+            else
+                state = START;
+            break;
+        case STOP_ST:
+            printf("STOP\n");
+            finished = 1;
+            break;
+        default:
+            break;
+        }
     }
+
+    // printf("[receiver] received trama: F: %x A: %x C: %x BCC: %x \n", trama_set->F, trama_set->A, trama_set->C, trama_set->BCC);
 }
 
 int send_ua_message(int fd, char * buf, struct trama_s * trama_ua){
@@ -30,10 +94,11 @@ int send_ua_message(int fd, char * buf, struct trama_s * trama_ua){
 }
 
 int receiver_connect (int fd, char * buf[]){
+    printf("ENTERED RECEIVER CONNECT\n");
 
     struct trama_s * trama = malloc(sizeof(struct trama_s));
 
-    wait_set_message(fd, buf, trama);
+    wait_set_message(fd, buf);
 
     send_ua_message(fd, buf, trama);
 
