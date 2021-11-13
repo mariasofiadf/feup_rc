@@ -19,8 +19,6 @@ volatile int STOP=FALSE;
 
 int flag = 1, try = 0;
 
-
-
 int wait_ua_message(int fd, char * buf[]){
     char rcv;
     int finished = 0;
@@ -79,21 +77,22 @@ int wait_ua_message(int fd, char * buf[]){
 }
 
 int send_set_message(int fd, char * buf){
-  char a = A_ISSUER, flag = FLAG, c = SET;
-  if(write(fd,&flag,1) <= 0)
-    return 1;
-  if(write(fd,&a,1) <= 0)
-     return 1;
-  if(write(fd,&c,1) <= 0)
-    return 1;
-  char BCC = a ^ c;
-  if(write(fd,&BCC,1) <= 0)
-    return 1;
-  if(write(fd,&flag,1) <= 0)
-    return 1;
-  printf("[issuer] Sent SET message\n");
+
+  char * set_message = malloc(5);
+  set_message[0] = FLAG;
+  set_message[1] = A_ISSUER;
+  set_message[2] = SET;
+  set_message[3] = A_ISSUER^SET;
+  set_message[4] = FLAG;
+
+  send_trama(fd, set_message, 6);
+
+  printf("[issuer] Sent SET message. \n");
+
+  free(set_message);
   return 0;
 }
+
 
 
 void sig_handler(int signum){
@@ -159,6 +158,30 @@ int inner_open(char** argv){
   return fd;
 }
 
+int llwrite(int fd, char * buffer, int length){
+  char * i_message = malloc(6+length);
+  i_message[0] = FLAG;
+  i_message[1] = A_ISSUER;
+  i_message[2] = C_ZERO;
+  i_message[3] = A_ISSUER^C_ZERO;
+  char bcc2;
+  int i = 0;
+  while(i < length){
+    i_message[i + 4] = buffer[i];
+    i++;
+    if(i > 0)
+    {
+      bcc2 = i_message[i-1] ^ i_message[i];
+    }
+  }
+  i_message[i + 4] = bcc2;
+  i_message[i + 5] = FLAG;
+  send_trama(fd, i_message, length + 6);
+
+  printf("[issuer] Sent %s message. \n", buffer);
+
+  free(i_message);
+}
 
 int main(int argc, char** argv)
   {
@@ -181,6 +204,9 @@ int main(int argc, char** argv)
       perror("[issuer] Connect failed!");       
       return -1;
   }
+
+  char buffer[] = "Hello World!";
+  llwrite(fd, buffer, strlen(buffer));
 
 
   sleep(1);

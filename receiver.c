@@ -71,19 +71,18 @@ int wait_set_message(int fd, char * buf[]){
 }
 
 int send_ua_message(int fd, char * buf, struct trama_s * trama_set){
-  char a = A_ISSUER, flag = FLAG, c = UA;
-  if(write(fd,&flag,1) <= 0)
-    return 1;
-  if(write(fd,&a,1) <= 0)
-     return 1;
-  if(write(fd,&c,1) <= 0)
-    return 1;
-  char BCC = a ^ c;
-  if(write(fd,&BCC,1) <= 0)
-    return 1;
-  if(write(fd,&flag,1) <= 0)
-    return 1;
+    char * set_message = malloc(5);
+    set_message[0] = FLAG;
+    set_message[1] = A_ISSUER;
+    set_message[2] = UA;
+    set_message[3] = A_ISSUER^UA;
+    set_message[4] = FLAG;
+
+    send_trama(fd, set_message, 6);
+
     printf("[receiver] Sent UA message\n");
+
+    free(set_message);
   return 0;
 }
 
@@ -97,6 +96,83 @@ int llopen (int fd, char * buf[]){
 
     free(trama);
 
+    return 0;
+}
+
+int llread(int fd, char * buffer){
+    
+    char rcv;
+    int finished = 0, count = 0;
+    char a, c, bcc2;
+    enum state state = START; 
+    char * data = malloc(255);
+    while(!finished){
+        if(read(fd,&rcv,1) <= 0)
+          usleep(100000);
+        switch (state)
+        {
+        case START:
+            //printf("START\n");
+            if(rcv == FLAG)
+                state = FLAG_RCV;
+            break;
+        case FLAG_RCV:
+            //printf("FLAG_RCV\n");
+            if(rcv == A_ISSUER){
+                a = rcv;
+                state = A_RCV;
+            }
+            else if(rcv != FLAG)
+                state = START;
+            break;
+        case A_RCV:
+            //printf("A_RCV\n");
+            if(rcv == C_ZERO){
+                c = rcv;
+                state = C_RCV;
+            }              
+            else if(rcv == FLAG)
+                state = FLAG_RCV;
+            else
+                state = START;
+            break;
+        case C_RCV:
+            //printf("C_RCV\n");
+            if(rcv == FLAG)
+                state = FLAG_RCV;
+            else if( rcv == (a ^ c))
+                state = BCC_OK;
+            else
+                state = START;
+            break;
+        case BCC_OK:
+            //printf("BCC_OK: %s\n", &rcv);
+            if(rcv == FLAG){
+                state = DATA_RCV;
+            }
+            else 
+            {
+                data[count] = rcv; count++;
+                if(count > 0)
+                {
+                    bcc2 = data[count-1] ^ data[count];
+                }
+            }
+            break;
+        case DATA_RCV:
+            if(data[count-1] == bcc2)
+                //printf("BCC2_OK\n");
+                data[count-1] = '\0';
+                finished = 1;
+            break;
+        default:
+            break;
+        }
+    }
+    sprintf(buffer,data);
+    printf("[receiver] Received %s message. \n", data);
+
+    free(data);
     return 0;
 }
 
@@ -152,6 +228,8 @@ int main(int argc, char** argv)
         perror("[receiver] Connect failed!");       
         return -1;
     }
+
+    llread(fd, buf);
 
     sleep(1);
     tcsetattr(fd,TCSANOW,&oldtio);

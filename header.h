@@ -15,7 +15,11 @@
 #define RR 0b00000101
 #define REJ 0b00000001
 
+#define C_ONE  0b01000000
+#define C_ZERO 0b00000000
+
 #include <stdlib.h>
+#include "common.h"
 
 struct trama_s
 {
@@ -41,7 +45,7 @@ enum state {
     A_RCV,
     C_RCV,
     BCC_OK,
-    STOP_ST
+    DATA_RCV
 };
 
 #endif
