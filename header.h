@@ -34,4 +34,14 @@ struct trama_i
     char BCC;  
 };
 
+
+enum state {
+    START,
+    FLAG_RCV,
+    A_RCV,
+    C_RCV,
+    BCC_OK,
+    STOP_ST
+};
+
 #endif
