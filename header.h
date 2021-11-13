@@ -18,6 +18,10 @@
 #define C_ONE  0b01000000
 #define C_ZERO 0b00000000
 
+
+#define TRANSMITTER 0
+#define RECEIVER 1
+
 #include <stdlib.h>
 #include "common.h"
 

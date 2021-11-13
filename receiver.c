@@ -15,7 +15,7 @@ volatile int STOP=FALSE;
 //emissor ligado a ttyS10 e  o recetor ligado a ttyS11
 
 
-int wait_set_message(int fd, char * buf[]){
+int wait_set_message(int fd){
     char rcv;
     int finished = 0;
     char a, c;
@@ -70,7 +70,7 @@ int wait_set_message(int fd, char * buf[]){
     return 0;
 }
 
-int send_ua_message(int fd, char * buf, struct trama_s * trama_set){
+int send_ua_message(int fd){
     char * set_message = malloc(5);
     set_message[0] = FLAG;
     set_message[1] = A_ISSUER;
@@ -86,15 +86,61 @@ int send_ua_message(int fd, char * buf, struct trama_s * trama_set){
   return 0;
 }
 
-int llopen (int fd, char * buf[]){
+int llopen (char * porta, int mode){
 
-    struct trama_s * trama = malloc(sizeof(struct trama_s));
+    int fd = inner_open(porta);
 
-    wait_set_message(fd, buf);
+    llopen_receiver(fd);
 
-    send_ua_message(fd, buf, trama);
+    return fd;
+}
 
-    free(trama);
+
+struct termios oldtio,newtio;
+
+int inner_open(char * porta){
+    int fd,c, res;
+
+    printf("%s\n", porta);
+
+    fd = open(porta, O_RDWR | O_NOCTTY );
+    if (fd <0) {perror(porta); exit(-1); }
+
+    if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
+    perror("tcgetattr");
+    exit(-1);
+    }
+
+    bzero(&newtio, sizeof(newtio));
+    newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+    newtio.c_iflag = IGNPAR;
+    newtio.c_oflag = 0;
+
+    /* set input mode (non-canonical, no echo,...) */
+    newtio.c_lflag = 0;
+
+    newtio.c_cc[VTIME] = 1; // inter-character timer unused /
+    newtio.c_cc[VMIN] = 0; // blocking read until 5 chars received /
+    /*
+    VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
+    leitura do(s) pr�ximo(s) caracter(es)
+    */
+    tcflush(fd, TCIOFLUSH);
+
+    if ( tcsetattr(fd,TCSANOW,&newtio) == -1) {
+    perror("tcsetattr");
+    exit(-1);
+    }
+    return fd;
+}
+
+int llopen_receiver (int fd){
+
+    printf("LLOPEN_REC\n");
+
+    wait_set_message(fd);
+
+    send_ua_message(fd);
 
     return 0;
 }
@@ -195,36 +241,7 @@ int main(int argc, char** argv)
     */
 
 
-    fd = open(argv[1], O_RDWR | O_NOCTTY );
-    if (fd <0) {perror(argv[1]); exit(-1); }
-
-    if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
-    perror("tcgetattr");
-    exit(-1);
-    }
-
-    bzero(&newtio, sizeof(newtio));
-    newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
-    newtio.c_iflag = IGNPAR;
-    newtio.c_oflag = 0;
-
-    /* set input mode (non-canonical, no echo,...) */
-    newtio.c_lflag = 0;
-
-    newtio.c_cc[VTIME] = 1; // inter-character timer unused /
-    newtio.c_cc[VMIN] = 0; // blocking read until 5 chars received /
-    /*
-    VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
-    leitura do(s) pr�ximo(s) caracter(es)
-    */
-    tcflush(fd, TCIOFLUSH);
-
-    if ( tcsetattr(fd,TCSANOW,&newtio) == -1) {
-    perror("tcsetattr");
-    exit(-1);
-    }
-
-    if(llopen(fd, buf)){
+    if((fd = llopen(argv[1], RECEIVER)) < 0){
         perror("[receiver] Connect failed!");       
         return -1;
     }
