@@ -101,7 +101,7 @@ void sig_handler(int signum){
   try++;
 }
 
-int issuer_connect (int fd, char * buf[]){
+int llopen (int fd, char * buf[]){
 
   signal(SIGALRM,sig_handler); // Register signal handler
  
@@ -116,7 +116,7 @@ int issuer_connect (int fd, char * buf[]){
     }
   }
 
-  return 1;
+  return -1;
 }
 
 struct termios oldtio,newtio;
@@ -159,11 +159,6 @@ int inner_open(char** argv){
   return fd;
 }
 
-int llopen(int porta, int type){ // type is TRANSMITTER OR RECEIVER
-
-  return 0;
-}
-
 
 int main(int argc, char** argv)
   {
@@ -174,7 +169,7 @@ int main(int argc, char** argv)
     printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
     exit(1);
   }
-  
+
   /*
   Open serial port device for reading and writing and not as controlling tty
   because we don't want to get killed if linenoise sends CTRL-C.
@@ -182,7 +177,7 @@ int main(int argc, char** argv)
 
   int fd = inner_open(argv);
 
-  if(issuer_connect(fd, buf)){
+  if(llopen(fd, buf) < 0){
       perror("[issuer] Connect failed!");       
       return -1;
   }

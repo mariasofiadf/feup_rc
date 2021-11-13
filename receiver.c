@@ -87,7 +87,7 @@ int send_ua_message(int fd, char * buf, struct trama_s * trama_set){
   return 0;
 }
 
-int receiver_connect (int fd, char * buf[]){
+int llopen (int fd, char * buf[]){
 
     struct trama_s * trama = malloc(sizeof(struct trama_s));
 
@@ -148,7 +148,7 @@ int main(int argc, char** argv)
     exit(-1);
     }
 
-    if(receiver_connect(fd, buf)){
+    if(llopen(fd, buf)){
         perror("[receiver] Connect failed!");       
         return -1;
     }
