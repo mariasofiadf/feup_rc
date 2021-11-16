@@ -49,7 +49,9 @@ enum state {
     A_RCV,
     C_RCV,
     BCC_OK,
-    DATA_RCV
+    DATA_RCV,
+    DISC_ST,
+    STOP_ST
 };
 
 #endif

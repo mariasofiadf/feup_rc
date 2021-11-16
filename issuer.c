@@ -18,6 +18,7 @@ volatile int STOP=FALSE;
 //emissor ligado a ttyS10 e  o recetor ligado a ttyS11
 
 int flag = 1, try = 0;
+struct termios oldtio,newtio;
 
 int wait_ua_message(int fd, char * buf[]){
     char rcv;
@@ -94,6 +95,23 @@ int send_set_message(int fd, char * buf){
 }
 
 
+int send_disc_message(int fd){
+
+  char * disc_message = malloc(5);
+  disc_message[0] = FLAG;
+  disc_message[1] = A_ISSUER;
+  disc_message[2] = DISC;
+  disc_message[3] = A_ISSUER^DISC;
+  disc_message[4] = FLAG;
+
+  send_trama(fd, disc_message, 6);
+
+  printf("[issuer] Sent DISC message. \n");
+
+  free(disc_message);
+  return 0;
+}
+
 
 void sig_handler(int signum){
   flag = 1;
@@ -118,7 +136,23 @@ int llopen (int fd, char * buf[]){
   return -1;
 }
 
-struct termios oldtio,newtio;
+int llclose(int fd){
+
+  sleep(1);
+
+  send_disc_message(fd);
+
+  sleep(1);
+
+  //repor serial port
+  if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
+    perror("tcsetattr");
+    exit(-1);
+  }
+
+  close(fd);
+}
+
 
 int inner_open(char** argv){
   int fd,c, res;
@@ -166,6 +200,7 @@ int llwrite(int fd, char * buffer, int length){
   i_message[3] = A_ISSUER^C_ZERO;
   char bcc2;
   int i = 0;
+  
   while(i < length){
     i_message[i + 4] = buffer[i];
     i++;
@@ -208,17 +243,8 @@ int main(int argc, char** argv)
   char buffer[] = "Hello World!";
   llwrite(fd, buffer, strlen(buffer));
 
-
-  sleep(1);
-
-  if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
-  perror("tcsetattr");
-  exit(-1);
-  }
+  llclose(fd);
 
 
-
-
-  close(fd);
   return 0;
 }
