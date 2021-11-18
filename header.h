@@ -22,7 +22,7 @@
 #define TRANSMITTER 0
 #define RECEIVER 1
 
-#define DEBUG 0
+#define DEBUG 1
 
 #include <stdlib.h>
 

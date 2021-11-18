@@ -111,13 +111,13 @@ int wait_ua(int fd){
 }
 
 
-int llwrite(int fd, char * buffer, int length){
-  char * i_message = malloc(6+length);
+int llwrite(int fd, unsigned char * buffer, int length){
+  unsigned char * i_message = malloc(6+length);
   i_message[0] = FLAG;
   i_message[1] = A_ISSUER;
   i_message[2] = C_ZERO;
   i_message[3] = A_ISSUER^C_ZERO;
-  char bcc2;
+  unsigned char bcc2;
   int i = 0;
   
   while(i < length){

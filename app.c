@@ -9,7 +9,7 @@
 
 #include "protocol.h"
 
-#define MAX_DATA 2
+#define MAX_DATA 1000
 
 enum mode{
     TRANSMITTER,
@@ -44,13 +44,15 @@ int readArgs(int arc, char**argv){
 int transmitter(){ 
     int file = open(filename, O_RDONLY); 
 
-    char data[256];
-
-    read(file, &data, 256);
+    unsigned char data[MAX_DATA];
 
     int fd = llopen(port, mode);
 
-    llwrite(fd,data,256);
+    int r = 0;
+    while((r = read(file, &data, MAX_DATA)) > 0){
+        llwrite(fd,data,r);
+        usleep(1000000);
+    }
 
     llclose(fd);
 
@@ -60,13 +62,17 @@ int transmitter(){
 int receiver(){
     int file = open(filename, O_WRONLY | O_CREAT, 0644); //Give permission to read and write to owner
 
-    char data[256];
+    unsigned char data[MAX_DATA];
 
     int fd = llopen(port, mode);
 
-    llread(fd,&data);
+    int r=0;
+    while ( r = llread(fd, &data))
+    {
+        /* code */
+        write(file, &data, r);
+    }
 
-    write(file, &data, strlen(data));
 
     close(file);
 }
