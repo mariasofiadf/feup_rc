@@ -20,7 +20,7 @@ int llopen_receiver(int fd)
 
 int wait_set(int fd)
 {
-    char rcv;
+    char rcv = "";
     int finished = 0;
     char a, c;
     enum state state = START;
@@ -81,7 +81,7 @@ int wait_set(int fd)
 
 int send_ua(int fd)
 {
-    char *set_message = malloc(5);
+    char set_message[5];
     set_message[0] = FLAG;
     set_message[1] = A_ISSUER;
     set_message[2] = UA;
@@ -93,21 +93,19 @@ int send_ua(int fd)
     if(DEBUG)
         printf("Sent UA message\n");
 
-    free(set_message);
     return 0;
 }
 
 int llread(int fd, char *buffer)
 {
 
-    unsigned char rcv;
+    unsigned char rcv = "";
     int finished = 0, count = 0;
-    char a, c, bcc2;
+    unsigned char a ="", c ="", bcc2="";
     enum state state = START;
-    unsigned char *data = malloc(255);
     while (!finished)
     {
-        if (read(fd, &rcv, 1) <= 0)
+        if ( read(fd, &rcv, 1) <= 0)
             usleep(100000);
         switch (state)
         {
@@ -168,15 +166,14 @@ int llread(int fd, char *buffer)
             break;
         case DATA_RCV:
             printf("DATA_RCV\n");
-            printf("Received %s message. \n", data);
+            //printf("Received %s message. \n", data);
             if (buffer[count - 1] == bcc2)
             {
                 printf("BCC2 OK\n");
-                data[count - 1] = '\0';
+                buffer[count - 1] = '\0';
                 state = STOP_ST;
                 //sprintf(buffer, data);
                 //printf("Received %s message. \n", data);
-                free(data);
                 
             }
             return count;
@@ -188,8 +185,6 @@ int llread(int fd, char *buffer)
             finished = 1;
             break;
         case STOP_ST:
-            if(DEBUG)
-                printf("Received %s message. \n", data);
             state = START;
             break;
         default:
@@ -197,6 +192,5 @@ int llread(int fd, char *buffer)
         }
     }
 
-    free(data);
     return 0;
 }

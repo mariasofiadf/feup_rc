@@ -36,7 +36,7 @@ int llopen_transmitter (int fd){
 
 int send_set(int fd){
 
-  char * set_message = malloc(5);
+  char set_message[5];
   set_message[0] = FLAG;
   set_message[1] = A_ISSUER;
   set_message[2] = SET;
@@ -47,8 +47,7 @@ int send_set(int fd){
 
   if(DEBUG)
     printf("Sent SET message. \n");
-
-  free(set_message);
+    
   return 0;
 }
 
@@ -141,7 +140,7 @@ int llwrite(int fd, unsigned char * buffer, int length){
 
 int send_disc(int fd){
 
-  char * disc_message = malloc(5);
+  char disc_message[5];
   disc_message[0] = FLAG;
   disc_message[1] = A_ISSUER;
   disc_message[2] = DISC;
@@ -153,7 +152,6 @@ int send_disc(int fd){
   if(DEBUG)
     printf("Sent DISC message. \n");
 
-  free(disc_message);
   return 0;
 }
 
