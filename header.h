@@ -23,7 +23,6 @@
 #define RECEIVER 1
 
 #include <stdlib.h>
-#include "common.h"
 
 struct trama_s
 {

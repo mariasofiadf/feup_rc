@@ -1,10 +1,7 @@
-all: send receiver
+all: app
 
-send: issuer.c
-	gcc -o issuer issuer.c common.c
-
-receiver: receiver.c
-	gcc -o receiver receiver.c common.c
+app: app.c protocol.c receiver.c issuer.c
+	gcc -o app app.c protocol.c receiver.c issuer.c
 
 clean:
-	rm issuer receiver
+	rm app

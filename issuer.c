@@ -1,5 +1,3 @@
-/*Non-Canonical Input Processing*/
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -7,20 +5,53 @@
 #include <stdio.h>
 #include<signal.h>
 
-
 #include "header.h"
 
-#define BAUDRATE B38400
-#define MODEMDEVICE "/dev/ttyS1"
-
-volatile int STOP=FALSE;
-
-//emissor ligado a ttyS10 e  o recetor ligado a ttyS11
-
 int flag = 1, try = 0;
-struct termios oldtio,newtio;
 
-int wait_ua_message(int fd, char * buf[]){
+//ISSUER
+
+void sig_handler(int signum){
+  flag = 1;
+  try++;
+}
+
+int llopen_issuer (int fd){
+
+  signal(SIGALRM,sig_handler); // Register signal handler
+ 
+  while (try < 3)
+  {
+    if(flag){
+      alarm(3);
+      flag = 0;
+      send_set(fd);
+      if(wait_ua(fd) == 0)
+        return 0;
+    }
+  }
+
+  return -1;
+}
+
+int send_set(int fd){
+
+  char * set_message = malloc(5);
+  set_message[0] = FLAG;
+  set_message[1] = A_ISSUER;
+  set_message[2] = SET;
+  set_message[3] = A_ISSUER^SET;
+  set_message[4] = FLAG;
+
+  send_trama(fd, set_message, 6);
+
+  printf("[issuer] Sent SET message. \n");
+
+  free(set_message);
+  return 0;
+}
+
+int wait_ua(int fd){
     char rcv;
     int finished = 0;
     char a, c;
@@ -77,120 +108,6 @@ int wait_ua_message(int fd, char * buf[]){
     return 1; //Failed
 }
 
-int send_set_message(int fd, char * buf){
-
-  char * set_message = malloc(5);
-  set_message[0] = FLAG;
-  set_message[1] = A_ISSUER;
-  set_message[2] = SET;
-  set_message[3] = A_ISSUER^SET;
-  set_message[4] = FLAG;
-
-  send_trama(fd, set_message, 6);
-
-  printf("[issuer] Sent SET message. \n");
-
-  free(set_message);
-  return 0;
-}
-
-
-int send_disc_message(int fd){
-
-  char * disc_message = malloc(5);
-  disc_message[0] = FLAG;
-  disc_message[1] = A_ISSUER;
-  disc_message[2] = DISC;
-  disc_message[3] = A_ISSUER^DISC;
-  disc_message[4] = FLAG;
-
-  send_trama(fd, disc_message, 6);
-
-  printf("[issuer] Sent DISC message. \n");
-
-  free(disc_message);
-  return 0;
-}
-
-
-void sig_handler(int signum){
-  flag = 1;
-  try++;
-}
-
-int llopen (int fd, char * buf[]){
-
-  signal(SIGALRM,sig_handler); // Register signal handler
- 
-  while (try < 3)
-  {
-    if(flag){
-      alarm(3);
-      flag = 0;
-      send_set_message(fd, buf);
-      if(wait_ua_message(fd, buf) == 0)
-        return 0;
-    }
-  }
-
-  return -1;
-}
-
-int llclose(int fd){
-
-  sleep(1);
-
-  send_disc_message(fd);
-
-  sleep(1);
-
-  //repor serial port
-  if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
-    perror("tcsetattr");
-    exit(-1);
-  }
-
-  close(fd);
-}
-
-
-int inner_open(char** argv){
-  int fd,c, res;
-  fd = open(argv[1], O_RDWR | O_NOCTTY );
-  if (fd <0) {perror(argv[1]); exit(-1); }
-
-  if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
-  perror("tcgetattr");
-  exit(-1);
-  }
-
-  bzero(&newtio, sizeof(newtio));
-  newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
-  newtio.c_iflag = IGNPAR;
-  newtio.c_oflag = 0;
-
-  /* set input mode (non-canonical, no echo,...) */
-  newtio.c_lflag = 0;
-
-  newtio.c_cc[VTIME] = 1; /* inter-character timer unused */
-  newtio.c_cc[VMIN] = 0; /* blocking read until n chars received */
-
-  /*
-  VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
-  leitura do(s) pr髕imo(s) caracter(es)
-  */
-
-  tcflush(fd, TCIOFLUSH);
-
-  if ( tcsetattr(fd,TCSANOW,&newtio) == -1) {
-  perror("tcsetattr");
-  exit(-1);
-  }
-
-  printf("New termios structure set\n");
-
-  return fd;
-}
 
 int llwrite(int fd, char * buffer, int length){
   char * i_message = malloc(6+length);
@@ -218,33 +135,22 @@ int llwrite(int fd, char * buffer, int length){
   free(i_message);
 }
 
-int main(int argc, char** argv)
-  {
-  char buf[255];
-  int i, sum = 0, speed = 0;
 
-  if ( (argc < 2) ) {
-    printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
-    exit(1);
-  }
+int send_disc(int fd){
 
-  /*
-  Open serial port device for reading and writing and not as controlling tty
-  because we don't want to get killed if linenoise sends CTRL-C.
-  */
+  char * disc_message = malloc(5);
+  disc_message[0] = FLAG;
+  disc_message[1] = A_ISSUER;
+  disc_message[2] = DISC;
+  disc_message[3] = A_ISSUER^DISC;
+  disc_message[4] = FLAG;
 
-  int fd = inner_open(argv);
+  send_trama(fd, disc_message, 6);
 
-  if(llopen(fd, buf) < 0){
-      perror("[issuer] Connect failed!");       
-      return -1;
-  }
+  printf("[issuer] Sent DISC message. \n");
 
-  char buffer[] = "Hello World!";
-  llwrite(fd, buffer, strlen(buffer));
-
-  llclose(fd);
-
-
+  free(disc_message);
   return 0;
 }
+
+
