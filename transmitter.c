@@ -116,22 +116,22 @@ int llwrite(int fd, unsigned char * buffer, int length){
   i_message[1] = A_ISSUER;
   i_message[2] = C_ZERO;
   i_message[3] = A_ISSUER^C_ZERO;
-  unsigned char bcc2;
-  int i = 4;
-  
-  while(i < length + 4){
-    i_message[i] = buffer[i-4];
-    if(i > 4)
-    {
-      bcc2 = i_message[i-1] ^ i_message[i];
-    }
-    else
-      bcc2 = i_message[i];
-    i++;
-    
+  unsigned char bcc2 = 0;
+
+  for(int i= 0; i < length; i++){
+    bcc2 = bcc2 ^ buffer[i];
+    i_message[i+4] = buffer[i];  
   }
-  i_message[i] = bcc2;
-  i_message[i+1] = FLAG;
+  printf("bcc2:%d\n",bcc2);
+
+
+  i_message[length+4] = bcc2;
+  i_message[length+5] = FLAG;
+
+  for(int i= 0; i < length+5; i++){
+    printf("%c", i_message[i]); 
+  }
+  printf("\n");
 
   send_trama(fd, i_message, length + 6);
 

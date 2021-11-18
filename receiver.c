@@ -96,11 +96,13 @@ int send_ua(int fd)
     return 0;
 }
 
-int bcc2_ok(char*buffer, int length){
+int bcc2_ok(unsigned char*buffer, int length){
     unsigned char bcc2 = buffer[0];
     for(int i = 1; i < length-1; i++){
-        bcc2 = buffer[i - 1] ^ buffer[i];
+        bcc2 = bcc2 ^ buffer[i];
     }
+    printf("local_bcc2:%d\n",bcc2);
+    printf("bcc2:%d\n",buffer[length-1]);
     if(bcc2 == buffer[length-1])
         return 1;
     return 0;
