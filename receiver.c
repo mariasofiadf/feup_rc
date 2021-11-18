@@ -165,18 +165,18 @@ int llread(int fd, char *buffer)
             }
             break;
         case DATA_RCV:
-            printf("DATA_RCV\n");
+            //printf("DATA_RCV\n");
             if (bcc2_ok(buffer, count))
             {
-                printf("BCC2 OK\n");
+                //printf("BCC2 OK\n");
                 buffer[count - 1] = '\0';
                 state = STOP_ST;
+                printf("Received %d information bytes correctly\n", count-1);
             }
-            printf("buff:%s\n", buffer);
             return count-1;
             break;
         case DISC_ST:
-            printf("DISC_ST\n");
+            //printf("DISC_ST\n");
             send_disc(fd);
             finished = 1;
             break;

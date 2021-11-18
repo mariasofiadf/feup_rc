@@ -9,7 +9,7 @@
 
 #include "protocol.h"
 
-#define MAX_DATA 1
+#define MAX_DATA 100
 
 enum mode{
     TRANSMITTER,
@@ -71,7 +71,6 @@ int receiver(){
     while ( r = llread(fd, &data))
     {
         /* code */
-        printf("data:%s\tr:%d\n",data,r);
         write(file, &data, r);
         memset(&data, '\0', MAX_DATA);
     }

@@ -130,15 +130,13 @@ int llwrite(int fd, unsigned char * buffer, int length){
     i++;
     
   }
-  printf("BCC2: %d\n", bcc2);
-  printf("BCC2: %d\n", i_message[i-1]);
   i_message[i] = bcc2;
   i_message[i+1] = FLAG;
 
   send_trama(fd, i_message, length + 6);
 
   if(DEBUG)
-    printf("Sent %s message. \n", buffer);
+    printf("Sent %d information bytes. \n", length);
 
 }
 
