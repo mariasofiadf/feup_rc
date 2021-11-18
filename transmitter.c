@@ -16,7 +16,7 @@ void sig_handler(int signum){
   try++;
 }
 
-int llopen_issuer (int fd){
+int llopen_transmitter (int fd){
 
   signal(SIGALRM,sig_handler); // Register signal handler
  
@@ -45,7 +45,8 @@ int send_set(int fd){
 
   send_trama(fd, set_message, 6);
 
-  printf("[issuer] Sent SET message. \n");
+  if(DEBUG)
+    printf("Sent SET message. \n");
 
   free(set_message);
   return 0;
@@ -95,7 +96,8 @@ int wait_ua(int fd){
             if(rcv == FLAG){
               try = 3;
               flag = 1;
-              printf("[issuer] Received UA message\n");
+              if(DEBUG)
+                printf("Received UA message\n");
               return 0; //Success
             }
             else
@@ -130,7 +132,8 @@ int llwrite(int fd, char * buffer, int length){
   i_message[i + 5] = FLAG;
   send_trama(fd, i_message, length + 6);
 
-  printf("[issuer] Sent %s message. \n", buffer);
+  if(DEBUG)
+    printf("Sent %s message. \n", buffer);
 
   free(i_message);
 }
@@ -147,7 +150,8 @@ int send_disc(int fd){
 
   send_trama(fd, disc_message, 6);
 
-  printf("[issuer] Sent DISC message. \n");
+  if(DEBUG)
+    printf("Sent DISC message. \n");
 
   free(disc_message);
   return 0;

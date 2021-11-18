@@ -74,7 +74,8 @@ int wait_set(int fd)
             break;
         }
     }
-    printf("[receiver] Received SET message\n");
+    if(DEBUG)
+        printf("Received SET message\n");
     return 0;
 }
 
@@ -89,7 +90,8 @@ int send_ua(int fd)
 
     send_trama(fd, set_message, 6);
 
-    printf("[receiver] Sent UA message\n");
+    if(DEBUG)
+        printf("Sent UA message\n");
 
     free(set_message);
     return 0;
@@ -179,7 +181,8 @@ int llread(int fd, char *buffer)
             finished = 1;
             break;
         case STOP_ST:
-            printf("[receiver] Received %s message. \n", data);
+            if(DEBUG)
+                printf("Received %s message. \n", data);
             state = START;
             break;
         default:

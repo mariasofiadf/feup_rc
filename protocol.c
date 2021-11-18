@@ -6,12 +6,11 @@
 #include<signal.h>
 
 #include "header.h"
-#include "issuer.h"
+#include "transmitter.h"
 #include "receiver.h"
 
 #define BAUDRATE B38400
 #define MODEMDEVICE "/dev/ttyS1"
-#define DEBUG 1
 
 //COMMON
 
@@ -60,7 +59,8 @@ int port_connect(char* port){
   exit(-1);
   }
 
-  printf("New termios structure set\n");
+    if(DEBUG)
+        printf("New termios structure set\n");
 
   return fd;
 }
@@ -75,7 +75,7 @@ int llopen(char *port, int mode)
         printf("Connected to port\n");
 
     if(mode == TRANSMITTER)
-        llopen_issuer(fd);
+        llopen_transmitter(fd);
     else
         llopen_receiver(fd);
 

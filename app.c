@@ -22,7 +22,7 @@ char filename[100], port[100];
 void printUsage(){
     printf("Usage:  app receiver|transmitter serialPort filename\n");
     printf("\tex: app receiver /dev/ttyS0 myfile.txt\n");
-    printf("\tex: app transmitter /dev/ttyS0 myfile.txt\n");
+    printf("\tex: app t /dev/ttyS0 myfile.txt\n");
 }
 
 int readArgs(int arc, char**argv){

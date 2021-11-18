@@ -22,6 +22,8 @@
 #define TRANSMITTER 0
 #define RECEIVER 1
 
+#define DEBUG 0
+
 #include <stdlib.h>
 
 struct trama_s
