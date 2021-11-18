@@ -47,7 +47,7 @@ int send_set(int fd){
 
   if(DEBUG)
     printf("Sent SET message. \n");
-    
+
   return 0;
 }
 
@@ -111,30 +111,35 @@ int wait_ua(int fd){
 
 
 int llwrite(int fd, unsigned char * buffer, int length){
-  unsigned char * i_message = malloc(6+length);
+  unsigned char i_message[6+length];
   i_message[0] = FLAG;
   i_message[1] = A_ISSUER;
   i_message[2] = C_ZERO;
   i_message[3] = A_ISSUER^C_ZERO;
   unsigned char bcc2;
-  int i = 0;
+  int i = 4;
   
-  while(i < length){
-    i_message[i + 4] = buffer[i];
-    i++;
-    if(i > 0)
+  while(i < length + 4){
+    i_message[i] = buffer[i-4];
+    if(i > 4)
     {
       bcc2 = i_message[i-1] ^ i_message[i];
     }
+    else
+      bcc2 = i_message[i];
+    i++;
+    
   }
-  i_message[i + 4] = bcc2;
-  i_message[i + 5] = FLAG;
+  printf("BCC2: %d\n", bcc2);
+  printf("BCC2: %d\n", i_message[i-1]);
+  i_message[i] = bcc2;
+  i_message[i+1] = FLAG;
+
   send_trama(fd, i_message, length + 6);
 
   if(DEBUG)
     printf("Sent %s message. \n", buffer);
 
-  free(i_message);
 }
 
 

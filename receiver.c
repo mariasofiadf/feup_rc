@@ -96,6 +96,16 @@ int send_ua(int fd)
     return 0;
 }
 
+int bcc2_ok(char*buffer, int length){
+    unsigned char bcc2 = buffer[0];
+    for(int i = 1; i < length-1; i++){
+        bcc2 = buffer[i - 1] ^ buffer[i];
+    }
+    if(bcc2 == buffer[length-1])
+        return 1;
+    return 0;
+}
+
 int llread(int fd, char *buffer)
 {
 
@@ -105,7 +115,7 @@ int llread(int fd, char *buffer)
     enum state state = START;
     while (!finished)
     {
-        if ( read(fd, &rcv, 1) <= 0)
+        if (read(fd, &rcv, 1) <= 0)
             usleep(100000);
         switch (state)
         {
@@ -123,7 +133,6 @@ int llread(int fd, char *buffer)
                 state = START;
             break;
         case A_RCV:
-            printf("A_RCV\n");
             if (rcv == C_ZERO)
             {
                 c = rcv;
@@ -137,7 +146,6 @@ int llread(int fd, char *buffer)
                 state = START;
             break;
         case C_RCV:
-            printf("C_RCV\n");
             if (rcv == FLAG)
                 state = FLAG_RCV;
             else if (rcv == (a ^ c))
@@ -146,38 +154,26 @@ int llread(int fd, char *buffer)
                 state = START;
             break;
         case BCC_OK:
-            //printf("BCC_OK: %s\n", &rcv);
             if (rcv == FLAG)
             {
                 state = DATA_RCV;
             }
             else
             {
-                //data[count] = rcv;
                 buffer[count] = rcv;
                 count++;
-                if (count > 0)
-                {
-                    bcc2 = buffer[count - 1] ^ buffer[count];
-                    
-                    //bcc2 = data[count - 1] ^ data[count];
-                }
             }
             break;
         case DATA_RCV:
             printf("DATA_RCV\n");
-            //printf("Received %s message. \n", data);
-            if (buffer[count - 1] == bcc2)
+            if (bcc2_ok(buffer, count))
             {
                 printf("BCC2 OK\n");
                 buffer[count - 1] = '\0';
                 state = STOP_ST;
-                //sprintf(buffer, data);
-                //printf("Received %s message. \n", data);
-                
             }
-            return count;
-            //finished = 1;
+            printf("buff:%s\n", buffer);
+            return count-1;
             break;
         case DISC_ST:
             printf("DISC_ST\n");
