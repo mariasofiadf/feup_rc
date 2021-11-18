@@ -18,7 +18,7 @@ volatile int STOP=FALSE;
 
 struct termios oldtio,newtio;
 
-int send_trama(int fd, char * buf, int length){
+int send_trama(int fd, unsigned char * buf, int length){
   int i = 0;
   while(i < length){
     write(fd,&buf[i],1);

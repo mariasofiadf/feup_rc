@@ -20,9 +20,9 @@ int llopen_receiver(int fd)
 
 int wait_set(int fd)
 {
-    char rcv = "";
+    unsigned char rcv = "";
     int finished = 0;
-    char a, c;
+    unsigned char a, c;
     enum state state = START;
     while (!finished)
     {
@@ -81,7 +81,7 @@ int wait_set(int fd)
 
 int send_ua(int fd)
 {
-    char set_message[5];
+    unsigned char set_message[5];
     set_message[0] = FLAG;
     set_message[1] = A_ISSUER;
     set_message[2] = UA;
@@ -101,14 +101,14 @@ int bcc2_ok(unsigned char*buffer, int length){
     for(int i = 1; i < length-1; i++){
         bcc2 = bcc2 ^ buffer[i];
     }
-    printf("local_bcc2:%d\n",bcc2);
-    printf("bcc2:%d\n",buffer[length-1]);
+    //printf("local_bcc2:%d\n",bcc2);
+    //printf("bcc2:%d\n",buffer[length-1]);
     if(bcc2 == buffer[length-1])
         return 1;
     return 0;
 }
 
-int llread(int fd, char *buffer)
+int llread(int fd, unsigned char *buffer)
 {
 
     unsigned char rcv = "";

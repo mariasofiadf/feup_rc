@@ -36,7 +36,7 @@ int llopen_transmitter (int fd){
 
 int send_set(int fd){
 
-  char set_message[5];
+  unsigned char set_message[5];
   set_message[0] = FLAG;
   set_message[1] = A_ISSUER;
   set_message[2] = SET;
@@ -52,9 +52,9 @@ int send_set(int fd){
 }
 
 int wait_ua(int fd){
-    char rcv;
+    unsigned char rcv;
     int finished = 0;
-    char a, c;
+    unsigned char a, c;
     enum state state = START; 
     while(!flag){
         if(read(fd,&rcv,1) <= 0)
@@ -122,16 +122,10 @@ int llwrite(int fd, unsigned char * buffer, int length){
     bcc2 = bcc2 ^ buffer[i];
     i_message[i+4] = buffer[i];  
   }
-  printf("bcc2:%d\n",bcc2);
-
+  //printf("bcc2:%d\n",bcc2);
 
   i_message[length+4] = bcc2;
   i_message[length+5] = FLAG;
-
-  for(int i= 0; i < length+5; i++){
-    printf("%c", i_message[i]); 
-  }
-  printf("\n");
 
   send_trama(fd, i_message, length + 6);
 
