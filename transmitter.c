@@ -1,0 +1,155 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <stdio.h>
+#include<signal.h>
+
+#include "header.h"
+
+int flag = 1, try = 0;
+
+//ISSUER
+
+void sig_handler(int signum){
+  flag = 1;
+  try++;
+}
+
+int llopen_transmitter (int fd){
+
+  signal(SIGALRM,sig_handler); // Register signal handler
+ 
+  while (try < 3)
+  {
+    if(flag){
+      alarm(3);
+      flag = 0;
+      send_set(fd);
+      if(wait_ua(fd) == 0)
+        return 0;
+    }
+  }
+
+  return -1;
+}
+
+int send_set(int fd){
+
+  unsigned char set_message[5];
+  set_message[0] = FLAG;
+  set_message[1] = A_ISSUER;
+  set_message[2] = SET;
+  set_message[3] = A_ISSUER^SET;
+  set_message[4] = FLAG;
+
+  send_trama(fd, set_message, 6);
+
+  if(DEBUG)
+    printf("Sent SET message. \n");
+
+  return 0;
+}
+
+int wait_ua(int fd){
+    unsigned char rcv;
+    int finished = 0;
+    unsigned char a, c;
+    enum state state = START; 
+    while(!flag){
+        if(read(fd,&rcv,1) <= 0)
+          usleep(100000);
+        switch (state)
+        {
+        case START:
+            if(rcv == FLAG)
+                state = FLAG_RCV;
+            break;
+        case FLAG_RCV:
+            if(rcv == A_ISSUER){
+                a = rcv;
+                state = A_RCV;
+            }
+            else if(rcv != FLAG)
+                state = START;
+            break;
+        case A_RCV:
+            if(rcv == UA){
+                c = rcv;
+                state = C_RCV;
+            }              
+            else if(rcv == FLAG)
+                state = FLAG_RCV;
+            else
+                state = START;
+            break;
+        case C_RCV:
+            if(rcv == FLAG)
+                state = FLAG_RCV;
+            else if( rcv == (a ^ c))
+                state = BCC_OK;
+            else
+                state = START;
+            break;
+        case BCC_OK:
+            if(rcv == FLAG){
+              try = 3;
+              flag = 1;
+              if(DEBUG)
+                printf("Received UA message\n");
+              return 0; //Success
+            }
+            else
+                state = START;
+            break;
+        default:
+            break;
+        }
+    }
+    return 1; //Failed
+}
+
+
+int llwrite(int fd, unsigned char * buffer, int length){
+  unsigned char i_message[6+length];
+  i_message[0] = FLAG;
+  i_message[1] = A_ISSUER;
+  i_message[2] = C_ZERO;
+  i_message[3] = A_ISSUER^C_ZERO;
+  unsigned char bcc2 = 0;
+
+  for(int i= 0; i < length; i++){
+    bcc2 = bcc2 ^ buffer[i];
+    i_message[i+4] = buffer[i];  
+  }
+  //printf("bcc2:%d\n",bcc2);
+
+  i_message[length+4] = bcc2;
+  i_message[length+5] = FLAG;
+
+  send_trama(fd, i_message, length + 6);
+
+  if(DEBUG)
+    printf("Sent %d information bytes. \n", length);
+
+}
+
+
+int send_disc(int fd){
+
+  char disc_message[5];
+  disc_message[0] = FLAG;
+  disc_message[1] = A_ISSUER;
+  disc_message[2] = DISC;
+  disc_message[3] = A_ISSUER^DISC;
+  disc_message[4] = FLAG;
+
+  send_trama(fd, disc_message, 6);
+
+  if(DEBUG)
+    printf("Sent DISC message. \n");
+
+  return 0;
+}
+
+
