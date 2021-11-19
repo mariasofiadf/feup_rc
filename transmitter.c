@@ -212,7 +212,7 @@ int send_info(int fd, unsigned char * buffer, int length){
   send_trama(fd, i_message, stuffed_size+4);
 
   if(DEBUG)
-    printf("Sent %d information bytes \n", length);
+    printf("Sent %d information bytes\tC_COUNT: %d \n", length,C_COUNT);
 
 }
 

@@ -104,10 +104,7 @@ int send_ua(int fd)
 
 int send_rr(int fd)
 {
-    if(RR_COUNT==RR_ONE)
-        RR_COUNT = RR_ZERO;
-    else
-        RR_COUNT = RR_ONE;
+
 
     unsigned char rr_message[5];
     rr_message[0] = FLAG;
@@ -196,12 +193,19 @@ wait_info(int fd, unsigned char *buffer, int size){
                 state = START;
             if (bcc2_ok(destuffed, destuff_size))
             {
-                if((c == C_ONE && RR_COUNT==RR_ZERO)||(c == C_ZERO && RR_COUNT==RR_ONE))
-                    return -1;
+                if((c == C_ONE && RR_COUNT==RR_ZERO)||(c == C_ZERO && RR_COUNT==RR_ONE)){
+                    printf("Received %d repeated information bytes correctly\tRR_COUNT: %d\n", destuff_size-2,RR_COUNT);
+                    return 0;
+                }
+                
                 for(int i = 0; i < destuff_size-2; i++){ //Copies data to buffer (removing bcc's)
                     buffer[i] = destuffed[i+1];
                 }
-                printf("Received %d information bytes correctly\n", destuff_size-2);
+                printf("Received %d information bytes correctly\tRR_COUNT: %d\n", destuff_size-2,RR_COUNT);
+                if(RR_COUNT==RR_ONE)
+                    RR_COUNT = RR_ZERO;
+                else
+                    RR_COUNT = RR_ONE;
                 free(destuffed);
                 return destuff_size-2;
             }
@@ -213,7 +217,7 @@ wait_info(int fd, unsigned char *buffer, int size){
         case DISC_ST:
             //printf("DISC_ST\n");
             send_disc(fd);
-            return 0;
+            return -1;
             break;
         case STOP_ST:
             state = START;
@@ -230,8 +234,10 @@ int llread(int fd, unsigned char *buffer, int size)
 {
 
     int r = wait_info(fd, buffer, size);
-    if(r>0)
+    sleep(3);
+    if(r>=0)
         send_rr(fd);
+        
     //else if(r == BCC2_NOK)
         //send_rej
     return r;

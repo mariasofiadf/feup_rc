@@ -69,11 +69,13 @@ int receiver(){
     int fd = llopen(port, mode);
 
     int r=0;
-    while ( r = llread(fd, &data,MAX_DATA))
+    while ( (r = llread(fd, &data,MAX_DATA)) >= 0)
     {
         /* code */
-        write(file, &data, r);
-        memset(&data, '\0', MAX_DATA);
+        if(r > 0){
+            write(file, &data, r);
+            memset(&data, '\0', MAX_DATA);
+        }
     }
 
     close(file);
