@@ -115,19 +115,32 @@ int llwrite(int fd, unsigned char * buffer, int length){
   i_message[0] = FLAG;
   i_message[1] = A_ISSUER;
   i_message[2] = C_ZERO;
-  i_message[3] = A_ISSUER^C_ZERO;
+
+  //i_message[3] = A_ISSUER^C_ZERO; //BCC1
   unsigned char bcc2 = 0;
 
-  for(int i= 0; i < length; i++){
+  int to_stuff_size = length+2;
+  unsigned char to_stuff[to_stuff_size];
+  to_stuff[0] = A_ISSUER^C_ZERO;
+  
+  for( int i=0; i < length; i++){
     bcc2 = bcc2 ^ buffer[i];
-    i_message[i+4] = buffer[i];  
+    to_stuff[i+1] = buffer[i];
+    //i_message[i+4] = buffer[i];  
   }
-  //printf("bcc2:%d\n",bcc2);
+  to_stuff[length+1]=bcc2;
 
-  i_message[length+4] = bcc2;
-  i_message[length+5] = FLAG;
+  unsigned char stuffed[(to_stuff_size)*2];
 
-  send_trama(fd, i_message, length + 6);
+  int stuffed_size = stuffing(to_stuff, stuffed,length+2);
+  //i_message[length+4] = bcc2;
+  for(int i = 0; i < stuffed_size; i++){
+    i_message[i+3] = stuffed[i];
+  }
+
+  i_message[stuffed_size+3] = FLAG;
+
+  send_trama(fd, i_message, stuffed_size+4);
 
   if(DEBUG)
     printf("Sent %d information bytes. \n", length);

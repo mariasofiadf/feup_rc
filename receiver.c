@@ -101,8 +101,6 @@ int bcc2_ok(unsigned char*buffer, int length){
     for(int i = 1; i < length-1; i++){
         bcc2 = bcc2 ^ buffer[i];
     }
-    //printf("local_bcc2:%d\n",bcc2);
-    //printf("bcc2:%d\n",buffer[length-1]);
     if(bcc2 == buffer[length-1])
         return 1;
     return 0;
