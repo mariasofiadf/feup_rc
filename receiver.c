@@ -101,20 +101,21 @@ int bcc2_ok(unsigned char*buffer, int length){
     for(int i = 2; i < length-1; i++){
         bcc2 = bcc2 ^ buffer[i];
     }
-    printf("BCC2_Local: %d\tBCC2_Rcv:%d\n", bcc2, buffer[length-1]);
+    //printf("BCC2_Local: %d\tBCC2_Rcv:%d\n", bcc2, buffer[length-1]);
     if(bcc2 == buffer[length-1])
         return 1;
     return 0;
 }
 
-int llread(int fd, unsigned char *buffer)
+int llread(int fd, unsigned char *buffer, int size)
 {
 
     unsigned char rcv = "";
     int finished = 0, count = 0;
     unsigned char a ="", c ="",bcc="", bcc2="";
     enum state state = START;
-    unsigned char * destuffed; 
+    unsigned char * destuffed;
+    unsigned char stuffed[size*2];
     while (!finished)
     {
         if (read(fd, &rcv, 1) <= 0)
@@ -164,21 +165,23 @@ int llread(int fd, unsigned char *buffer)
             }
             else
             {
-                printf("rcv:%d\t", rcv);
-                buffer[count] = rcv;
+                //printf("rcv:%d\t", rcv);
+                //realloc(stuffed, count+1);
+                stuffed[count] = rcv;
+                //buffer[count] = rcv;
                 count++;
             }
             break;
         case DATA_RCV://TODO FLAG_RCV
             //printf("DATA_RCV\n");
             destuffed = malloc(count);
-            int destuff_size = destuffing(buffer, destuffed, count);
+            int destuff_size = destuffing(stuffed, destuffed, count);
             if (bcc2_ok(destuffed, destuff_size))
             {
                 //printf("BCC2 OK\n");
 
-                memset(buffer, '\0', count);
-                for(int i = 0; i < destuff_size-1; i++){ //Copies data to buffer (removing bcc's)
+                //memset(buffer, '\0', count);
+                for(int i = 0; i < destuff_size-2; i++){ //Copies data to buffer (removing bcc's)
                     buffer[i] = destuffed[i+1];
                 }
                 printf("Received %d information bytes correctly\n", destuff_size-2);

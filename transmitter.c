@@ -131,7 +131,7 @@ int llwrite(int fd, unsigned char * buffer, int length){
   }
   to_stuff[length+1]=bcc2;
 
-  printf("BCC2:%d\t", bcc2);
+  //printf("BCC2:%d\t", bcc2);
 
   unsigned char stuffed[(to_stuff_size)*2];
 
@@ -140,7 +140,7 @@ int llwrite(int fd, unsigned char * buffer, int length){
   for(int i = 0; i < stuffed_size; i++){
     i_message[i+3] = stuffed[i];
   }
-  printf("BCC1:%d\n", i_message[3]);
+  //printf("BCC1:%d\n", i_message[3]);
   i_message[stuffed_size+3] = FLAG;
 
   send_trama(fd, i_message, stuffed_size+4);
