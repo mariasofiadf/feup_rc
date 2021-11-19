@@ -97,10 +97,11 @@ int send_ua(int fd)
 }
 
 int bcc2_ok(unsigned char*buffer, int length){
-    unsigned char bcc2 = buffer[0];
-    for(int i = 1; i < length-1; i++){
+    unsigned char bcc2 = buffer[1]; //buffer[0] is BCC1
+    for(int i = 2; i < length-1; i++){
         bcc2 = bcc2 ^ buffer[i];
     }
+    printf("BCC2_Local: %d\tBCC2_Rcv:%d\n", bcc2, buffer[length-1]);
     if(bcc2 == buffer[length-1])
         return 1;
     return 0;
@@ -111,8 +112,9 @@ int llread(int fd, unsigned char *buffer)
 
     unsigned char rcv = "";
     int finished = 0, count = 0;
-    unsigned char a ="", c ="", bcc2="";
+    unsigned char a ="", c ="",bcc="", bcc2="";
     enum state state = START;
+    unsigned char * destuffed; 
     while (!finished)
     {
         if (read(fd, &rcv, 1) <= 0)
@@ -136,7 +138,7 @@ int llread(int fd, unsigned char *buffer)
             if (rcv == C_ZERO)
             {
                 c = rcv;
-                state = C_RCV;
+                state = RECEIVING;
             }
             else if (rcv == FLAG)
                 state = FLAG_RCV;
@@ -145,35 +147,45 @@ int llread(int fd, unsigned char *buffer)
             else
                 state = START;
             break;
-        case C_RCV:
-            if (rcv == FLAG)
-                state = FLAG_RCV;
-            else if (rcv == (a ^ c))
-                state = BCC_OK;
-            else
-                state = START;
-            break;
-        case BCC_OK:
+        //case C_RCV:
+            // if (rcv == FLAG)
+            //     state = FLAG_RCV;
+            // else if (rcv == (a ^ c)){
+            //     bcc = rcv;
+            //     state = BCC_OK;
+            // }
+            // else
+            //     state = START;
+            // break;
+        case RECEIVING: //RECEIVING
             if (rcv == FLAG)
             {
-                state = DATA_RCV;
+                state = DATA_RCV; //2nd Flag received
             }
             else
             {
+                printf("rcv:%d\t", rcv);
                 buffer[count] = rcv;
                 count++;
             }
             break;
-        case DATA_RCV:
+        case DATA_RCV://TODO FLAG_RCV
             //printf("DATA_RCV\n");
-            if (bcc2_ok(buffer, count))
+            destuffed = malloc(count);
+            int destuff_size = destuffing(buffer, destuffed, count);
+            if (bcc2_ok(destuffed, destuff_size))
             {
                 //printf("BCC2 OK\n");
-                buffer[count - 1] = '\0';
-                state = STOP_ST;
-                printf("Received %d information bytes correctly\n", count-1);
+
+                memset(buffer, '\0', count);
+                for(int i = 0; i < destuff_size-1; i++){ //Copies data to buffer (removing bcc's)
+                    buffer[i] = destuffed[i+1];
+                }
+                printf("Received %d information bytes correctly\n", destuff_size-2);
             }
-            return count-1;
+            
+            free(destuffed);
+            return destuff_size-2;
             break;
         case DISC_ST:
             //printf("DISC_ST\n");

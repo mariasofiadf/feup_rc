@@ -9,7 +9,7 @@
 
 #include "protocol.h"
 
-#define MAX_DATA 100
+#define MAX_DATA 200
 
 enum mode{
     TRANSMITTER,
@@ -65,6 +65,7 @@ int receiver(){
 
     unsigned char data[MAX_DATA];
 
+    memset(&data, '\0', MAX_DATA);
     int fd = llopen(port, mode);
 
     int r=0;

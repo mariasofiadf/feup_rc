@@ -121,7 +121,8 @@ int llwrite(int fd, unsigned char * buffer, int length){
 
   int to_stuff_size = length+2;
   unsigned char to_stuff[to_stuff_size];
-  to_stuff[0] = A_ISSUER^C_ZERO;
+  to_stuff[0] = A_ISSUER^C_ZERO; //BCC1
+
   
   for( int i=0; i < length; i++){
     bcc2 = bcc2 ^ buffer[i];
@@ -130,6 +131,8 @@ int llwrite(int fd, unsigned char * buffer, int length){
   }
   to_stuff[length+1]=bcc2;
 
+  printf("BCC2:%d\t", bcc2);
+
   unsigned char stuffed[(to_stuff_size)*2];
 
   int stuffed_size = stuffing(to_stuff, stuffed,length+2);
@@ -137,7 +140,7 @@ int llwrite(int fd, unsigned char * buffer, int length){
   for(int i = 0; i < stuffed_size; i++){
     i_message[i+3] = stuffed[i];
   }
-
+  printf("BCC1:%d\n", i_message[3]);
   i_message[stuffed_size+3] = FLAG;
 
   send_trama(fd, i_message, stuffed_size+4);

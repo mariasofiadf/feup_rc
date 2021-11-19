@@ -52,7 +52,8 @@ enum state {
     BCC_OK,
     DATA_RCV,
     DISC_ST,
-    STOP_ST
+    STOP_ST,
+    RECEIVING
 };
 
 #endif
