@@ -76,7 +76,6 @@ int receiver(){
         memset(&data, '\0', MAX_DATA);
     }
 
-
     close(file);
 }
 

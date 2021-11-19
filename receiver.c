@@ -7,6 +7,11 @@
 
 #include "header.h"
 
+
+u_int8_t RR_COUNT = RR_ZERO;
+
+int BCC2_NOK = -65;
+
 //RECEIVER
 
 int llopen_receiver(int fd)
@@ -96,6 +101,29 @@ int send_ua(int fd)
     return 0;
 }
 
+
+int send_rr(int fd)
+{
+    if(RR_COUNT==RR_ONE)
+        RR_COUNT = RR_ZERO;
+    else
+        RR_COUNT = RR_ONE;
+
+    unsigned char rr_message[5];
+    rr_message[0] = FLAG;
+    rr_message[1] = A_ISSUER;
+    rr_message[2] = RR_COUNT;
+    rr_message[3] = A_ISSUER ^ RR_COUNT;
+    rr_message[4] = FLAG;
+
+    send_trama(fd, rr_message, 6);
+
+    if(DEBUG)
+        printf("Sent RR message\n");
+
+    return 0;
+}
+
 int bcc2_ok(unsigned char*buffer, int length){
     unsigned char bcc2 = buffer[1]; //buffer[0] is BCC1
     for(int i = 2; i < length-1; i++){
@@ -107,9 +135,10 @@ int bcc2_ok(unsigned char*buffer, int length){
     return 0;
 }
 
-int llread(int fd, unsigned char *buffer, int size)
-{
 
+
+wait_info(int fd, unsigned char *buffer, int size){
+    
     unsigned char rcv = "";
     int finished = 0, count = 0;
     unsigned char a ="", c ="",bcc="", bcc2="";
@@ -136,7 +165,7 @@ int llread(int fd, unsigned char *buffer, int size)
                 state = START;
             break;
         case A_RCV:
-            if (rcv == C_ZERO)
+            if (rcv == C_ZERO || rcv == C_ONE)
             {
                 c = rcv;
                 state = RECEIVING;
@@ -148,16 +177,6 @@ int llread(int fd, unsigned char *buffer, int size)
             else
                 state = START;
             break;
-        //case C_RCV:
-            // if (rcv == FLAG)
-            //     state = FLAG_RCV;
-            // else if (rcv == (a ^ c)){
-            //     bcc = rcv;
-            //     state = BCC_OK;
-            // }
-            // else
-            //     state = START;
-            // break;
         case RECEIVING: //RECEIVING
             if (rcv == FLAG)
             {
@@ -165,10 +184,7 @@ int llread(int fd, unsigned char *buffer, int size)
             }
             else
             {
-                //printf("rcv:%d\t", rcv);
-                //realloc(stuffed, count+1);
                 stuffed[count] = rcv;
-                //buffer[count] = rcv;
                 count++;
             }
             break;
@@ -176,24 +192,28 @@ int llread(int fd, unsigned char *buffer, int size)
             //printf("DATA_RCV\n");
             destuffed = malloc(count);
             int destuff_size = destuffing(stuffed, destuffed, count);
+            if(destuffed[0] != a^c)//BCC1 check
+                state = START;
             if (bcc2_ok(destuffed, destuff_size))
             {
-                //printf("BCC2 OK\n");
-
-                //memset(buffer, '\0', count);
+                if((c == C_ONE && RR_COUNT==RR_ZERO)||(c == C_ZERO && RR_COUNT==RR_ONE))
+                    return -1;
                 for(int i = 0; i < destuff_size-2; i++){ //Copies data to buffer (removing bcc's)
                     buffer[i] = destuffed[i+1];
                 }
                 printf("Received %d information bytes correctly\n", destuff_size-2);
+                free(destuffed);
+                return destuff_size-2;
             }
-            
-            free(destuffed);
-            return destuff_size-2;
+            else{
+                free(destuffed);
+                return BCC2_NOK;
+            }
             break;
         case DISC_ST:
             //printf("DISC_ST\n");
             send_disc(fd);
-            finished = 1;
+            return 0;
             break;
         case STOP_ST:
             state = START;
@@ -203,5 +223,16 @@ int llread(int fd, unsigned char *buffer, int size)
         }
     }
 
-    return 0;
+    return -1;
+
+}
+int llread(int fd, unsigned char *buffer, int size)
+{
+
+    int r = wait_info(fd, buffer, size);
+    if(r>0)
+        send_rr(fd);
+    //else if(r == BCC2_NOK)
+        //send_rej
+    return r;
 }
