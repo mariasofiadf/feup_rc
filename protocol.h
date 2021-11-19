@@ -10,5 +10,9 @@ int port_connect(char** argv);
 
 int llopen(char *port, int mode);
 
+//returns size of stuffed data
+int stuffing(char * data, char * stuf_data, unsigned int data_size);
+
+int destuffing(char * stuf_data, char * destuf_data, unsigned int data_size);
 
 #endif

@@ -98,3 +98,52 @@ int llclose(int fd){
 
   close(fd);
 }
+
+
+int stuffing(char * data, char * stuf_data, unsigned int data_size){
+    unsigned int j = 0;
+
+    for(unsigned int i=0; i < data_size; i++)
+    {
+        if(data[i]== 0x7e){
+            stuf_data[j]=0x7d;
+            j++;
+            stuf_data[j]=0x5e;
+
+        }
+        else if(data[i]==0x7d){
+
+            stuf_data[j]=0x7d;
+            j++;
+            stuf_data[j]=0x5d;
+        }
+        else stuf_data[j]=data[i];
+        j++;
+    }
+
+    return j;
+}
+
+
+int destuffing(char * stuf_data, char * destuf_data, unsigned int data_size){
+    unsigned int j = 0;
+
+    for(unsigned int i=0; i < data_size*2;i++)
+    {
+        //printf(stuf_data[i]);
+        if(stuf_data[i]== 0x7d && stuf_data[i+1] == 0x5e){
+            destuf_data[j]=0x7e;
+            i++;
+        }
+        else if(stuf_data[i]==0x7d && stuf_data[i+1] == 0x5d){
+            destuf_data[j]=0x7d;
+            i++;
+        }
+        else destuf_data[j]= stuf_data[i];
+        j++;
+    }
+
+    return 0;
+}
+
+
