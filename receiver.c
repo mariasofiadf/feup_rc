@@ -193,7 +193,7 @@ wait_info(int fd, unsigned char *buffer, int size){
             if(destuffed[0] != a^c)//BCC1 check
                 state = START;
             if((c == C_ONE && RR_COUNT==RR_ZERO)||(c == C_ZERO && RR_COUNT==RR_ONE)){
-                printf("Received %d repeated information bytes correctly\tRR_COUNT: %d\n", destuff_size-2,RR_COUNT);
+                printf("Received %d repeated information bytes correctly\n", destuff_size-2);
                 return 0;
             }
             if (bcc2_ok(destuffed, destuff_size))
@@ -202,7 +202,7 @@ wait_info(int fd, unsigned char *buffer, int size){
                 for(int i = 0; i < destuff_size-2; i++){ //Copies data to buffer (removing bcc's)
                     buffer[i] = destuffed[i+1];
                 }
-                printf("Received %d information bytes correctly\tRR_COUNT: %d\n", destuff_size-2,RR_COUNT);
+                printf("Received %d information bytes correctly\n", destuff_size-2);
                 if(RR_COUNT==RR_ONE)
                     RR_COUNT = RR_ZERO;
                 else
@@ -212,6 +212,7 @@ wait_info(int fd, unsigned char *buffer, int size){
             }
             else{
                 free(destuffed);
+                printf("Received %d information bytes INCORRECTLY\n", destuff_size-2);
                 return BCC2_NOK;
             }
             break;
@@ -239,7 +240,7 @@ int send_rej(int fd)
     rej_message[0] = FLAG;
     rej_message[1] = A_ISSUER;
     rej_message[2] = RR_COUNT & REJ_MASK; // if RR_COUNT==RR_ZERO then = REJ_ZERO
-    rej_message[3] = A_ISSUER ^ RR_COUNT;
+    rej_message[3] = A_ISSUER ^ rej_message[2];
     rej_message[4] = FLAG;
 
     send_trama(fd, rej_message, 6);
@@ -254,6 +255,7 @@ int llread(int fd, unsigned char *buffer, int size)
 {
 
     int r = wait_info(fd, buffer, size);
+
     if(r>=0)
         send_rr(fd);
     else if(r == BCC2_NOK){

@@ -157,8 +157,10 @@ int wait_rr(int fd){
         case BCC_OK:
             if((c == RR_ZERO && C_COUNT==C_ZERO)||(c == RR_ONE && C_COUNT==C_ONE))
               return 1;
-            else if((c == REJ_ZERO && C_COUNT == C_ZERO) || c == REJ_ONE && C_COUNT == C_ONE)
+            else if((c == REJ_ZERO && C_COUNT == C_ZERO) || c == REJ_ONE && C_COUNT == C_ONE){
+              printf("Received REJ message\n");
               return -1;
+            }
             if(C_COUNT == C_ZERO)
               C_COUNT = C_ONE;
             else C_COUNT = C_ZERO;
@@ -201,8 +203,9 @@ int send_info(int fd, unsigned char * buffer, int length){
   }
   
   //FORCE BCC2 ERRORS TO CREATE REJ ON RECEIVER
-  if((random() % 10) == 0){ //10% chance of error
+  if((random() % 10) == 0){ //1 in 10 chance of error
     bcc2 = !bcc2;
+    memset(&to_stuff, '3',length/2);
   }
 
 
@@ -227,7 +230,7 @@ int send_info(int fd, unsigned char * buffer, int length){
   send_trama(fd, i_message, stuffed_size+4);
 
   if(DEBUG)
-    printf("Sent %i information bytes\tC_COUNT: %d \n", length,C_COUNT);
+    printf("Sent %i information bytes\n", length);
 
 }
 
@@ -236,6 +239,7 @@ int llwrite(int fd, unsigned char * buffer, int length){
 
   signal(SIGALRM,sig_handler); // Register signal handler
   flag = 1; try = 0;
+
   while (try < RETRANSMISSIONMAX)
   {
     if(flag){
