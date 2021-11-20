@@ -128,9 +128,14 @@ int stuffing(char * data, char * stuf_data, unsigned int data_size){
 int destuffing(char * stuf_data, char * destuf_data, unsigned int data_size){
     unsigned int j = 0;
 
-    for(unsigned int i=0; i < data_size*2;i++)
+    // printf("Stuf:\t");
+    // for(int i = 0; i < data_size; i++){
+    //     printf("%d ", stuf_data[i]);
+    // }
+    // printf("\n");
+
+    for(unsigned int i=0; i < data_size;i++)
     {
-        //printf(stuf_data[i]);
         if(stuf_data[i]== 0x7d && stuf_data[i+1] == 0x5e){
             destuf_data[j]=0x7e;
             i++;
@@ -142,8 +147,13 @@ int destuffing(char * stuf_data, char * destuf_data, unsigned int data_size){
         else destuf_data[j]= stuf_data[i];
         j++;
     }
+    // printf("Destuf:\t");
+    // for(int i = 0; i < j; i++){
+    //     printf("%d ", destuf_data[i]);
+    // }
+    // printf("\n");
 
-    return 0;
+    return j;
 }
 
 

@@ -9,7 +9,7 @@
 
 #include "protocol.h"
 
-#define MAX_DATA 100
+#define MAX_DATA 20000
 
 enum mode{
     TRANSMITTER,
@@ -50,8 +50,9 @@ int transmitter(){
 
     int r = 0;
     while((r = read(file, &data, MAX_DATA)) > 0){
+        printf("r: %d",r);
         llwrite(fd,data,r);
-        usleep(1000000);
+        //usleep(1000000);
         memset(&data, '\0', MAX_DATA);
     }
 
@@ -65,16 +66,18 @@ int receiver(){
 
     unsigned char data[MAX_DATA];
 
+    memset(&data, '\0', MAX_DATA);
     int fd = llopen(port, mode);
 
     int r=0;
-    while ( r = llread(fd, &data))
+    while ( (r = llread(fd, &data,MAX_DATA)) >= 0)
     {
         /* code */
-        write(file, &data, r);
-        memset(&data, '\0', MAX_DATA);
+        if(r > 0){
+            write(file, &data, r);
+            memset(&data, '\0', MAX_DATA);
+        }
     }
-
 
     close(file);
 }
