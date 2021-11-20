@@ -203,10 +203,11 @@ int send_info(int fd, unsigned char * buffer, int length){
   }
   
   //FORCE BCC2 ERRORS TO CREATE REJ ON RECEIVER
-  if((random() % 10) == 0){ //1 in 10 chance of error
-    bcc2 = !bcc2;
-    memset(&to_stuff, '3',length/2);
-  }
+  //FOR TESTING
+  // if((random() % 10) == 0){ //1 in 10 chance of error
+  //   bcc2 = !bcc2;
+  //   memset(&to_stuff, '3',length/2);
+  // }
 
 
   to_stuff[length+1]=bcc2;
