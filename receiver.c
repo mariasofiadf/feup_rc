@@ -234,7 +234,6 @@ int llread(int fd, unsigned char *buffer, int size)
 {
 
     int r = wait_info(fd, buffer, size);
-    sleep(3);
     if(r>=0)
         send_rr(fd);
         
