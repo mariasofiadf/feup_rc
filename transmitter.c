@@ -137,7 +137,7 @@ int wait_rr(int fd){
                 state = START;
             break;
         case A_RCV:
-            if(rcv == RR_ONE || rcv == RR_ZERO){
+            if(rcv == RR_ONE || rcv == RR_ZERO || rcv == REJ_ZERO || rcv == REJ_ONE){
               c = rcv;
               state = C_RCV;
             }
@@ -157,6 +157,8 @@ int wait_rr(int fd){
         case BCC_OK:
             if((c == RR_ZERO && C_COUNT==C_ZERO)||(c == RR_ONE && C_COUNT==C_ONE))
               return 1;
+            else if((c == REJ_ZERO && C_COUNT == C_ZERO) || c == REJ_ONE && C_COUNT == C_ONE)
+              return -1;
             if(C_COUNT == C_ZERO)
               C_COUNT = C_ONE;
             else C_COUNT = C_ZERO;
@@ -198,6 +200,11 @@ int send_info(int fd, unsigned char * buffer, int length){
     //i_message[i+4] = buffer[i];  
   }
   
+  //FORCE BCC2 ERRORS TO CREATE REJ ON RECEIVER
+  if((random() % 10) == 0){ //10% chance of error
+    bcc2 = !bcc2;
+  }
+
 
   to_stuff[length+1]=bcc2;
 
@@ -235,8 +242,12 @@ int llwrite(int fd, unsigned char * buffer, int length){
       alarm(3);
       flag = 0;
       send_info(fd, buffer, length); //send_info
-       if(wait_rr(fd) == 0) //wait_rr
-         return 0;
+      int r = wait_rr(fd);
+      if( r == 0) //wait_rr
+        return 0;
+      else if( r == -1){
+        flag = 1;
+      }
     }
   }
 

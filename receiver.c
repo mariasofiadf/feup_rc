@@ -124,6 +124,7 @@ int send_rr(int fd)
 int bcc2_ok(unsigned char*buffer, int length){
     unsigned char bcc2 = buffer[1]; //buffer[0] is BCC1
     for(int i = 2; i < length-1; i++){
+#define REJ_ZERO 0b00000001
         bcc2 = bcc2 ^ buffer[i];
     }
     //printf("BCC2_Local: %d\tBCC2_Rcv:%d\n", bcc2, buffer[length-1]);
@@ -231,14 +232,33 @@ wait_info(int fd, unsigned char *buffer, int size){
     return -1;
 
 }
+
+int send_rej(int fd)
+{
+    unsigned char rej_message[5];
+    rej_message[0] = FLAG;
+    rej_message[1] = A_ISSUER;
+    rej_message[2] = RR_COUNT & REJ_MASK; // if RR_COUNT==RR_ZERO then = REJ_ZERO
+    rej_message[3] = A_ISSUER ^ RR_COUNT;
+    rej_message[4] = FLAG;
+
+    send_trama(fd, rej_message, 6);
+
+    if(DEBUG)
+        printf("Sent REJ message\n");
+
+    return 0;
+}
+
 int llread(int fd, unsigned char *buffer, int size)
 {
 
     int r = wait_info(fd, buffer, size);
     if(r>=0)
         send_rr(fd);
-        
-    //else if(r == BCC2_NOK)
-        //send_rej
+    else if(r == BCC2_NOK){
+        send_rej(fd);
+        return 0;
+    }
     return r;
 }

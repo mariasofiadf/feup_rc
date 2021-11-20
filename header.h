@@ -12,9 +12,13 @@
 #define SET 0b00000011
 #define DISC 0b00001011
 #define UA 0b00000111
+
 #define RR_ZERO 0b00000101
 #define RR_ONE  0b10000101
-#define REJ 0b00000001
+
+#define REJ_MASK 0b10000001
+#define REJ_ZERO 0b00000001
+#define REJ_ONE 0b10000001
 
 #define C_ONE  0b01000000
 #define C_ZERO 0b00000000
