@@ -7,11 +7,12 @@
 
 #include "header.h"
 
-int flag = 1, try = 0;
 
 u_int8_t C_COUNT = C_ZERO;
 
 //ISSUER
+
+int flag = 1, try = 0;
 
 void sig_handler(int signum){
   flag = 1;
@@ -22,7 +23,7 @@ int llopen_transmitter (int fd){
 
   signal(SIGALRM,sig_handler); // Register signal handler
  
-  while (try < 3)
+  while (try < RETRANSMISSIONMAX)
   {
     if(flag){
       alarm(3);
@@ -58,6 +59,7 @@ int wait_ua(int fd){
     int finished = 0;
     unsigned char a, c;
     enum state state = START; 
+    flag = 0;
     while(!flag){
         if(read(fd,&rcv,1) <= 0)
           usleep(100000);
@@ -95,7 +97,7 @@ int wait_ua(int fd){
             break;
         case BCC_OK:
             if(rcv == FLAG){
-              try = 3;
+              try = RETRANSMISSIONMAX;
               flag = 1;
               if(DEBUG)
                 printf("Received UA message\n");
@@ -159,7 +161,7 @@ int wait_rr(int fd){
               C_COUNT = C_ONE;
             else C_COUNT = C_ZERO;
             if(rcv == FLAG){
-              try = 3;
+              try = RETRANSMISSIONMAX;
               flag = 1;
               if(DEBUG)
                 printf("Received RR message\n");
@@ -178,7 +180,6 @@ int wait_rr(int fd){
 int send_info(int fd, unsigned char * buffer, int length){
 
   unsigned char i_message[6+length*2];
-  printf("alocated: %d", length + 6);
   i_message[0] = FLAG;
   i_message[1] = A_ISSUER;
   i_message[2] = C_COUNT; //C_ZERO || C_ONE
@@ -206,8 +207,6 @@ int send_info(int fd, unsigned char * buffer, int length){
 
   int stuffed_size = stuffing(to_stuff, stuffed,length+2);
 
-  
-  printf("stuffed_size: %d\n", stuffed_size);
   //i_message[length+4] = bcc2;
   for(int i = 0; i < stuffed_size; i++){
     
@@ -230,7 +229,7 @@ int llwrite(int fd, unsigned char * buffer, int length){
 
   signal(SIGALRM,sig_handler); // Register signal handler
   flag = 1; try = 0;
-  while (try < 3)
+  while (try < RETRANSMISSIONMAX)
   {
     if(flag){
       alarm(3);
@@ -263,3 +262,96 @@ int send_disc(int fd){
 }
 
 
+
+int wait_disc(int fd)
+{
+    unsigned char rcv = "";
+    int finished = 0;
+    unsigned char a, c;
+    enum state state = START;
+    while (!finished)
+    {
+        if (read(fd, &rcv, 1) <= 0)
+            usleep(100000);
+        switch (state)
+        {
+        case START:
+            if (rcv == FLAG)
+                state = FLAG_RCV;
+            break;
+        case FLAG_RCV:
+            if (rcv == A_ISSUER)
+            {
+                a = rcv;
+                state = A_RCV;
+            }
+            else if (rcv != FLAG)
+                state = START;
+            break;
+        case A_RCV:
+            if (rcv == DISC)
+            {
+                c = rcv;
+                state = C_RCV;
+            }
+            else if (rcv == FLAG)
+                state = FLAG_RCV;
+            else
+                state = START;
+            break;
+        case C_RCV:
+            if (rcv == FLAG)
+                state = FLAG_RCV;
+            else if (rcv == (a ^ c))
+                state = BCC_OK;
+            else
+                state = START;
+            break;
+        case BCC_OK:
+            if (rcv == FLAG)
+            {
+                finished = 1;
+            }
+            else
+                state = START;
+            break;
+        default:
+            break;
+        }
+    }
+    if(DEBUG)
+        printf("Received DISC message\n");
+    return 0;
+}
+
+
+
+int llclose(int fd){
+
+  flag = 1; try = 0;
+
+  signal(SIGALRM,sig_handler); // Register signal handler
+ 
+  while (try < RETRANSMISSIONMAX)
+  {
+    if(flag){
+      alarm(3);
+      flag = 0;
+      send_disc(fd);
+      if(wait_disc(fd) == 0)
+        try = RETRANSMISSIONMAX;
+    }
+  }
+
+  send_ua(fd);
+
+  sleep(1);
+
+  //repor serial port
+  if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
+    perror("tcsetattr");
+    exit(-1);
+  }
+
+  close(fd);
+}

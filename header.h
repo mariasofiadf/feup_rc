@@ -24,8 +24,10 @@
 #define RECEIVER 1
 
 #define DEBUG 1
-
+#define RETRANSMISSIONMAX 3
 #include <stdlib.h>
+
+struct termios oldtio,newtio;
 
 struct trama_s
 {

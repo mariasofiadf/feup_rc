@@ -191,12 +191,12 @@ wait_info(int fd, unsigned char *buffer, int size){
             int destuff_size = destuffing(stuffed, destuffed, count);
             if(destuffed[0] != a^c)//BCC1 check
                 state = START;
+            if((c == C_ONE && RR_COUNT==RR_ZERO)||(c == C_ZERO && RR_COUNT==RR_ONE)){
+                printf("Received %d repeated information bytes correctly\tRR_COUNT: %d\n", destuff_size-2,RR_COUNT);
+                return 0;
+            }
             if (bcc2_ok(destuffed, destuff_size))
             {
-                if((c == C_ONE && RR_COUNT==RR_ZERO)||(c == C_ZERO && RR_COUNT==RR_ONE)){
-                    printf("Received %d repeated information bytes correctly\tRR_COUNT: %d\n", destuff_size-2,RR_COUNT);
-                    return 0;
-                }
                 
                 for(int i = 0; i < destuff_size-2; i++){ //Copies data to buffer (removing bcc's)
                     buffer[i] = destuffed[i+1];
@@ -215,8 +215,9 @@ wait_info(int fd, unsigned char *buffer, int size){
             }
             break;
         case DISC_ST:
-            //printf("DISC_ST\n");
+            printf("Received DISC message\n");
             send_disc(fd);
+            wait_ua(fd);
             return -1;
             break;
         case STOP_ST:

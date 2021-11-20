@@ -16,7 +16,7 @@
 
 volatile int STOP=FALSE;
 
-struct termios oldtio,newtio;
+
 
 int send_trama(int fd, unsigned char * buf, int length){
   int i = 0;
@@ -82,23 +82,6 @@ int llopen(char *port, int mode)
     return fd;
 }
 
-int llclose(int fd){
-
-  sleep(1);
-
-  send_disc(fd);
-
-  sleep(1);
-
-  //repor serial port
-  if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
-    perror("tcsetattr");
-    exit(-1);
-  }
-
-  close(fd);
-}
-
 
 int stuffing(char * data, char * stuf_data, unsigned int data_size){
     unsigned int j = 0;
@@ -155,5 +138,6 @@ int destuffing(char * stuf_data, char * destuf_data, unsigned int data_size){
 
     return j;
 }
+
 
 
