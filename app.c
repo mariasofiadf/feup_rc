@@ -60,43 +60,43 @@ int transmitter(){
 
     int fd = llopen(port, mode);
 
-    printf("OPEN");
     unsigned char cpacket[CPACKET_SIZE];
     cpacket[0] = START; //C
     cpacket[1] = FILE_SIZE; //T
     cpacket[2] = sizeof(MAX_DATA); //L
-    int i = 3;
-    for(;sizeof(MAX_DATA);i++){
-        cpacket[i] = MAX_DATA >> 8*(sizeof(MAX_DATA)-3-i);
+    int i = 0;
+    for(;i< sizeof(MAX_DATA);i++){
+        cpacket[i+3] = MAX_DATA >> 8*(sizeof(MAX_DATA) - i - 1);
     }
-
+    i += 3;
     cpacket[i] = FILE_NAME; //T2
-    cpacket[i++] = strlen(filename); //L2
-    int j = i;
-    for(;j<strlen(filename)+i;j++){
-        cpacket[j] = filename[j-i];
+    cpacket[i+1] = strlen(filename); //L2
+    int j = i + 2;
+
+
+    for(int x = 0; x < strlen(filename); x++){
+        cpacket[j+x] = filename[x];
     }
     
-    for(int i = 0; i < j; i++){
-        printf("%c ", cpacket[i]);
+    llwrite(fd,&cpacket,j+strlen(filename));    
+
+    int DPACKET_SIZE = MAX_DATA+4;
+    unsigned char dpacket[DPACKET_SIZE];
+    unsigned char * ptr = &dpacket;
+    int r = 0;
+    while((r = read(file, ptr+4, MAX_DATA)) > 0){
+        dpacket[0] = 1;
+        dpacket[1] = MAX_DATA >> 8;
+        dpacket[2] = MAX_DATA & 0x00ff;
+        dpacket[3] = 1;
+        DPACKET_SIZE = r + 4;
+        llwrite(fd,&dpacket,DPACKET_SIZE);
+        //usleep(1000000);
+        memset(&dpacket, '\0', MAX_DATA+4);
     }
-    llwrite(fd,&cpacket,j);    
 
-
-    // int DPACKET_SIZE = MAX_DATA+4;
-    // unsigned char dpacket[DPACKET_SIZE];
-    // unsigned char * ptr = &dpacket;
-    // int r = 0;
-    // while((r = read(file, ptr+4, MAX_DATA)) > 0){
-    //     dpacket[0] = 1;
-    //     dpacket[1] = MAX_DATA >> 8;
-    //     dpacket[2] = MAX_DATA & 0x00ff;
-    //     dpacket[3] = 1;
-    //     DPACKET_SIZE = r + 4;
-    //     llwrite(fd,&dpacket,DPACKET_SIZE);
-    //     //usleep(1000000);
-    //     memset(&dpacket, '\0', MAX_DATA+4);
-    // }
+    cpacket[0] = END;
+    llwrite(fd,&cpacket,j+strlen(filename));
 
     llclose(fd);
 
@@ -110,45 +110,46 @@ int receiver(){
 
     unsigned char cpacket[CPACKET_SIZE];
     int r = 0;
-    while((r = llread(fd,&cpacket,CPACKET_SIZE)<=0));
-
-    for(int i = 0; i < r; i++){
-        printf("%c ", cpacket[i]);
+    while(r<=0){
+        r = llread(fd,&cpacket,CPACKET_SIZE);
     }
 
-    // if(cpacket[0]!=START) //START EXPECTED
-    //     return 1;
-    // unsigned int filesize = 0;
-    // int i = 0;
-    // if(cpacket[1] == FILE_SIZE){//cpacket[1]->T
-    //     for(; i < cpacket[2]; i++){ //cpacket[2]->L
-    //         filesize = filesize | (cpacket[i+3] >> i*8);
-    //     }
-    // }
-    // char filen[200];
-    // if(cpacket[i+3] == FILE_NAME){//cpacket[1]->T2
-    //     int j = i+4;
-    //     for(; j < cpacket[i+4]; i++){ //cpacket[i+4]->L2
-    //         filen[j-i+4] = cpacket[j];
-    //     }
-    // }
+    if(cpacket[0]!=START) //START EXPECTED
+        return 1;
+    unsigned long int filesize = 0;
+    int i = 0;
+    if(cpacket[1] == FILE_SIZE){//cpacket[1]->T
+        for(; i < cpacket[2]; i++){ //cpacket[2]->L
+            filesize = filesize | (cpacket[i+3] << (cpacket[2]-i-1)*8);
+        }
+    }
 
-    
+    printf("filesize: %d\t", filesize);
+    char filen[200];
 
+    printf("filename_size: %d\t ", cpacket[i+4]);
+    if(cpacket[i+3] == FILE_NAME){//cpacket[i+3]->T2
+        int j = i+4;
+        for(int x = 0; x < cpacket[i+4]; x++){
+            filen[x] = cpacket[x+i+5];
+        }
+    }
+    printf("filename: %s\t", filen);
 
+    unsigned char dpacket[MAX_DATA+4];
 
-    // unsigned char dpacket[MAX_DATA+4];
-
-    // unsigned char * ptr = &dpacket;
-    // int r=0;
-    // while ( (r = llread(fd, &dpacket,MAX_DATA+4)) >= 0)
-    // {
-    //     /* code */
-    //     if(r > 0){
-    //         write(file, ptr+4, r-4);
-    //         memset(&dpacket, '\0', MAX_DATA+4);
-    //     }
-    // }
+    unsigned char * ptr = &dpacket;
+    r=0;
+    while ( (r = llread(fd, &dpacket,MAX_DATA+4)) >= 0)
+    {
+        /* code */
+        if(dpacket[0] == END)
+            continue;
+        if(r > 0){
+            write(file, ptr+4, r-4);
+            memset(&dpacket, '\0', MAX_DATA+4);
+        }
+    }
 
     close(file);
 }
