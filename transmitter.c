@@ -22,18 +22,19 @@ void sig_handler(int signum){
 int llopen_transmitter (int fd){
 
   signal(SIGALRM,sig_handler); // Register signal handler
- 
+
   while (try < RETRANSMISSIONMAX)
   {
+    printf("1");
     if(flag){
       alarm(3);
       flag = 0;
       send_set(fd);
-      if(wait_ua(fd) == 0)
+      if(wait_ua(fd) == 0){
         return 0;
+      }
     }
   }
-
   return -1;
 }
 
@@ -339,8 +340,6 @@ int wait_disc(int fd)
         printf("Received DISC message\n");
     return 0;
 }
-
-
 
 int llclose(int fd){
 
