@@ -22,18 +22,19 @@ void sig_handler(int signum){
 int llopen_transmitter (int fd){
 
   signal(SIGALRM,sig_handler); // Register signal handler
- 
+
   while (try < RETRANSMISSIONMAX)
   {
+    printf("1");
     if(flag){
       alarm(3);
       flag = 0;
       send_set(fd);
-      if(wait_ua(fd) == 0)
+      if(wait_ua(fd) == 0){
         return 0;
+      }
     }
   }
-
   return -1;
 }
 
@@ -204,10 +205,10 @@ int send_info(int fd, unsigned char * buffer, int length){
   
   //FORCE BCC2 ERRORS TO CREATE REJ ON RECEIVER
   //FOR TESTING
-  // if((random() % 10) == 0){ //1 in 10 chance of error
-  //   bcc2 = !bcc2;
-  //   memset(&to_stuff, '3',length/2);
-  // }
+  if((random() % 10) == 0){ //1 in 10 chance of error
+    bcc2 = !bcc2;
+    memset(&to_stuff, '3',length/2);
+  }
 
 
   to_stuff[length+1]=bcc2;
@@ -339,8 +340,6 @@ int wait_disc(int fd)
         printf("Received DISC message\n");
     return 0;
 }
-
-
 
 int llclose(int fd){
 

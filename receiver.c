@@ -104,8 +104,6 @@ int send_ua(int fd)
 
 int send_rr(int fd)
 {
-
-
     unsigned char rr_message[5];
     rr_message[0] = FLAG;
     rr_message[1] = A_ISSUER;

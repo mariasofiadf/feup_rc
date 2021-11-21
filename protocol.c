@@ -79,6 +79,7 @@ int llopen(char *port, int mode)
     else
         llopen_receiver(fd);
 
+    printf("sedefasf");
     return fd;
 }
 
