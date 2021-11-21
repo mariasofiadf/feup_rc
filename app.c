@@ -103,8 +103,7 @@ int transmitter(){
     close(file);
 }
 
-int receiver(){
-    int file = open(filename, O_WRONLY | O_CREAT, 0644); //Give permission to read and write to owner
+int receiver(){ //Give permission to read and write to owner
 
     int fd = llopen(port, mode);
 
@@ -124,17 +123,16 @@ int receiver(){
         }
     }
 
-    printf("filesize: %d\t", filesize);
     char filen[200];
 
-    printf("filename_size: %d\t ", cpacket[i+4]);
     if(cpacket[i+3] == FILE_NAME){//cpacket[i+3]->T2
         int j = i+4;
         for(int x = 0; x < cpacket[i+4]; x++){
             filen[x] = cpacket[x+i+5];
         }
     }
-    printf("filename: %s\t", filen);
+
+    int file = open(filen, O_WRONLY | O_CREAT, 0644);
 
     unsigned char dpacket[MAX_DATA+4];
 
