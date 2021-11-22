@@ -15,4 +15,10 @@ int stuffing(char * data, char * stuf_data, unsigned int data_size);
 
 int destuffing(char * stuf_data, char * destuf_data, unsigned int data_size);
 
+int send_ua(int fd);
+
+int send_disc(int fd);
+
+int wait_disc(int fd);
+
 #endif

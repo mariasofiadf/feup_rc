@@ -84,23 +84,6 @@ int wait_set(int fd)
     return 0;
 }
 
-int send_ua(int fd)
-{
-    unsigned char set_message[5];
-    set_message[0] = FLAG;
-    set_message[1] = A_ISSUER;
-    set_message[2] = UA;
-    set_message[3] = A_ISSUER ^ UA;
-    set_message[4] = FLAG;
-
-    send_trama(fd, set_message, 6);
-
-    if(DEBUG)
-        printf("Sent UA message\n");
-
-    return 0;
-}
-
 
 int send_rr(int fd)
 {

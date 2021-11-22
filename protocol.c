@@ -124,4 +124,100 @@ int destuffing(char * stuf_data, char * destuf_data, unsigned int data_size){
 }
 
 
+int send_ua(int fd)
+{
+    unsigned char set_message[5];
+    set_message[0] = FLAG;
+    set_message[1] = A_ISSUER;
+    set_message[2] = UA;
+    set_message[3] = A_ISSUER ^ UA;
+    set_message[4] = FLAG;
 
+    send_trama(fd, set_message, 6);
+
+    if(DEBUG)
+        printf("Sent UA message\n");
+
+    return 0;
+}
+
+
+int send_disc(int fd){
+
+  char disc_message[5];
+  disc_message[0] = FLAG;
+  disc_message[1] = A_ISSUER;
+  disc_message[2] = DISC;
+  disc_message[3] = A_ISSUER^DISC;
+  disc_message[4] = FLAG;
+
+  send_trama(fd, disc_message, 6);
+
+  if(DEBUG)
+    printf("Sent DISC message. \n");
+
+  return 0;
+}
+
+
+
+int wait_disc(int fd)
+{
+    unsigned char rcv = "";
+    int finished = 0;
+    unsigned char a, c;
+    enum state state = START;
+    while (!finished)
+    {
+        if (read(fd, &rcv, 1) <= 0)
+            usleep(100000);
+        switch (state)
+        {
+        case START:
+            if (rcv == FLAG)
+                state = FLAG_RCV;
+            break;
+        case FLAG_RCV:
+            if (rcv == A_ISSUER)
+            {
+                a = rcv;
+                state = A_RCV;
+            }
+            else if (rcv != FLAG)
+                state = START;
+            break;
+        case A_RCV:
+            if (rcv == DISC)
+            {
+                c = rcv;
+                state = C_RCV;
+            }
+            else if (rcv == FLAG)
+                state = FLAG_RCV;
+            else
+                state = START;
+            break;
+        case C_RCV:
+            if (rcv == FLAG)
+                state = FLAG_RCV;
+            else if (rcv == (a ^ c))
+                state = BCC_OK;
+            else
+                state = START;
+            break;
+        case BCC_OK:
+            if (rcv == FLAG)
+            {
+                finished = 1;
+            }
+            else
+                state = START;
+            break;
+        default:
+            break;
+        }
+    }
+    if(DEBUG)
+        printf("Received DISC message\n");
+    return 0;
+}
