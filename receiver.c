@@ -122,10 +122,8 @@ int send_rr(int fd)
 int bcc2_ok(unsigned char*buffer, int length){
     unsigned char bcc2 = buffer[1]; //buffer[0] is BCC1
     for(int i = 2; i < length-1; i++){
-#define REJ_ZERO 0b00000001
         bcc2 = bcc2 ^ buffer[i];
     }
-    //printf("BCC2_Local: %d\tBCC2_Rcv:%d\n", bcc2, buffer[length-1]);
     if(bcc2 == buffer[length-1])
         return 1;
     return 0;
@@ -219,9 +217,6 @@ wait_info(int fd, unsigned char *buffer, int size){
             send_disc(fd);
             wait_ua(fd);
             return -1;
-            break;
-        case STOP_ST:
-            state = START;
             break;
         default:
             break;

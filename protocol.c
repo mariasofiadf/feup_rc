@@ -47,11 +47,6 @@ int port_connect(char* port){
   newtio.c_cc[VTIME] = 1; /* inter-character timer unused */
   newtio.c_cc[VMIN] = 0; /* blocking read until n chars received */
 
-  /*
-  VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a
-  leitura do(s) pr髕imo(s) caracter(es)
-  */
-
   tcflush(fd, TCIOFLUSH);
 
   if ( tcsetattr(fd,TCSANOW,&newtio) == -1) {
@@ -111,12 +106,6 @@ int stuffing(char * data, char * stuf_data, unsigned int data_size){
 int destuffing(char * stuf_data, char * destuf_data, unsigned int data_size){
     unsigned int j = 0;
 
-    // printf("Stuf:\t");
-    // for(int i = 0; i < data_size; i++){
-    //     printf("%d ", stuf_data[i]);
-    // }
-    // printf("\n");
-
     for(unsigned int i=0; i < data_size;i++)
     {
         if(stuf_data[i]== 0x7d && stuf_data[i+1] == 0x5e){
@@ -130,11 +119,6 @@ int destuffing(char * stuf_data, char * destuf_data, unsigned int data_size){
         else destuf_data[j]= stuf_data[i];
         j++;
     }
-    // printf("Destuf:\t");
-    // for(int i = 0; i < j; i++){
-    //     printf("%d ", destuf_data[i]);
-    // }
-    // printf("\n");
 
     return j;
 }
