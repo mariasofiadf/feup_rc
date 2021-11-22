@@ -10,7 +10,7 @@
 
 #include "protocol.h"
 
-unsigned int MAX_DATA = 10000;
+unsigned short int MAX_DATA = 32000;
 
 #define VERBOSE 1
 
@@ -103,9 +103,9 @@ send_data_packets(int fd, int file){
     int r = 0, counter = 0;
     while((r = read(file, ptr+4, MAX_DATA)) > 0){
         dpacket[0] = 1;
-        dpacket[1] = r >> 8;
-        dpacket[2] = r & 0x00ff;
-        dpacket[3] = counter % 255; 
+        dpacket[1] = counter % 255; 
+        dpacket[2] = r >> 8;
+        dpacket[3] = r & 0x00ff;
         DPACKET_SIZE = r + 4;
         llwrite(fd,&dpacket,DPACKET_SIZE);
         if(VERBOSE) printf("[App] Sent %d data bytes\n",r);
@@ -153,9 +153,9 @@ int wait_data_packets(int fd, int file){
     {
         if(dpacket[0] == END)
             continue;
-        data_rcv = (dpacket[1]<<8) | (dpacket[2]);
+        data_rcv = (dpacket[2]<<8) | (dpacket[3]);
         if(VERBOSE) printf("[App] Received %d data bytes\n",data_rcv);
-        counter = dpacket[2];
+        counter = dpacket[1];
         if(r > 0){
             write(file, ptr+4, r-4);
             memset(&dpacket, '\0', MAX_DATA+4);
