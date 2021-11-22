@@ -33,12 +33,12 @@ char filename[100], port[100];
 
 void printUsage(){
     printf("Usage:  app receiver|transmitter serialPort filename\n");
-    printf("\tex: app receiver /dev/ttyS0 myfile.txt\n");
-    printf("\tex: app t /dev/ttyS0 myfile.txt\n");
+    printf("\tex: app receiver /dev/ttyS0\n");
+    printf("\tex: app t /dev/ttyS0 myfile.jpg\n");
 }
 
-int readArgs(int arc, char**argv){
-    if(arc != 4)
+int readArgs(int argc, char**argv){
+    if(argc != 4 && argc != 3)
         return 1;
     if(!strcmp(argv[1],"receiver") || !strcmp(argv[1],"r"))
         mode = RECEIVER;
@@ -48,7 +48,8 @@ int readArgs(int arc, char**argv){
         return 1;
         
     strcpy(port, argv[2]);
-    strcpy(filename,argv[3]);
+    if(mode==TRANSMITTER)
+        strcpy(filename,argv[3]);
     
     return 0;
 }
