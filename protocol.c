@@ -55,7 +55,7 @@ int port_connect(char* port){
   }
 
     if(DEBUG)
-        printf("New termios structure set\n");
+        printf("[Protocol] New termios structure set\n");
 
   return fd;
 }
@@ -67,7 +67,7 @@ int llopen(char *port, int mode)
     if(fd < 0)
         return 1;
     if(DEBUG)
-        printf("Connected to port\n");
+        printf("[Protocol] Connected to port\n");
 
     if(mode == TRANSMITTER)
         llopen_transmitter(fd);
@@ -136,7 +136,7 @@ int send_ua(int fd)
     send_trama(fd, set_message, 6);
 
     if(DEBUG)
-        printf("Sent UA message\n");
+        printf("[Protocol] Sent UA message\n");
 
     return 0;
 }
@@ -154,7 +154,7 @@ int send_disc(int fd){
   send_trama(fd, disc_message, 6);
 
   if(DEBUG)
-    printf("Sent DISC message. \n");
+    printf("[Protocol] Sent DISC message\n");
 
   return 0;
 }
@@ -218,6 +218,6 @@ int wait_disc(int fd)
         }
     }
     if(DEBUG)
-        printf("Received DISC message\n");
+        printf("[Protocol] Received DISC message\n");
     return 0;
 }

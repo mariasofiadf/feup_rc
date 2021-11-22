@@ -80,7 +80,7 @@ int wait_set(int fd)
         }
     }
     if(DEBUG)
-        printf("Received SET message\n");
+        printf("[Protocol] Received SET message\n");
     return 0;
 }
 
@@ -97,7 +97,7 @@ int send_rr(int fd)
     send_trama(fd, rr_message, 6);
 
     if(DEBUG)
-        printf("Sent RR message\n");
+        printf("[Protocol] Sent RR message\n");
 
     return 0;
 }
@@ -172,7 +172,7 @@ wait_info(int fd, unsigned char *buffer, int size){
             if(destuffed[0] != a^c)//BCC1 check
                 state = START;
             if((c == C_ONE && RR_COUNT==RR_ZERO)||(c == C_ZERO && RR_COUNT==RR_ONE)){
-                printf("Received %d repeated information bytes correctly\n", destuff_size-2);
+                printf("[Protocol] Received %d repeated information bytes correctly\n", destuff_size-2);
                 return 0;
             }
             if (bcc2_ok(destuffed, destuff_size))
@@ -181,7 +181,7 @@ wait_info(int fd, unsigned char *buffer, int size){
                 for(int i = 0; i < destuff_size-2; i++){ //Copies data to buffer (removing bcc's)
                     buffer[i] = destuffed[i+1];
                 }
-                printf("Received %d information bytes correctly\n", destuff_size-2);
+                printf("[Protocol] Received %d information bytes correctly\n", destuff_size-2);
                 if(RR_COUNT==RR_ONE)
                     RR_COUNT = RR_ZERO;
                 else
@@ -191,12 +191,12 @@ wait_info(int fd, unsigned char *buffer, int size){
             }
             else{
                 free(destuffed);
-                printf("Received %d information bytes INCORRECTLY\n", destuff_size-2);
+                printf("[Protocol] Received %d information bytes INCORRECTLY\n", destuff_size-2);
                 return BCC2_NOK;
             }
             break;
         case DISC_ST:
-            printf("Received DISC message\n");
+            printf("[Protocol] Received DISC message\n");
             send_disc(fd);
             wait_ua(fd);
             return -1;
@@ -222,7 +222,7 @@ int send_rej(int fd)
     send_trama(fd, rej_message, 6);
 
     if(DEBUG)
-        printf("Sent REJ message\n");
+        printf("[Protocol] Sent REJ message\n");
 
     return 0;
 }

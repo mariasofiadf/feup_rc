@@ -25,7 +25,6 @@ int llopen_transmitter (int fd){
 
   while (try < RETRANSMISSION_MAX)
   {
-    printf("1");
     if(flag){
       alarm(RETRANSMISSION_WAIT);
       flag = 0;
@@ -50,7 +49,7 @@ int send_set(int fd){
   send_trama(fd, set_message, 6);
 
   if(DEBUG)
-    printf("Sent SET message. \n");
+    printf("[Protocol] Sent SET message\n");
 
   return 0;
 }
@@ -101,7 +100,7 @@ int wait_ua(int fd){
               try = RETRANSMISSION_MAX;
               flag = 1;
               if(DEBUG)
-                printf("Received UA message\n");
+                printf("[Protocol] Received UA message\n");
               return 0; //Success
             }
             else
@@ -159,7 +158,7 @@ int wait_rr(int fd){
             if((c == RR_ZERO && C_COUNT==C_ZERO)||(c == RR_ONE && C_COUNT==C_ONE))
               return 1;
             else if((c == REJ_ZERO && C_COUNT == C_ZERO) || c == REJ_ONE && C_COUNT == C_ONE){
-              printf("Received REJ message\n");
+              printf("[Protocol] Received REJ message\n");
               return -1;
             }
             if(C_COUNT == C_ZERO)
@@ -169,7 +168,7 @@ int wait_rr(int fd){
               try = RETRANSMISSION_MAX;
               flag = 1;
               if(DEBUG)
-                printf("Received RR message\n");
+                printf("[Protocol] Received RR message\n");
               return 0; //Success
             }
             else
@@ -225,13 +224,12 @@ int send_info(int fd, unsigned char * buffer, int length){
     i_message[i+3] = stuffed[i];
   }
   
-  //printf("BCC1:%d\n", i_message[3]);
   i_message[stuffed_size+3] = FLAG;
 
   send_trama(fd, i_message, stuffed_size+4);
 
   if(DEBUG)
-    printf("Sent %i information bytes\n", length);
+    printf("[Protocol] Sent %i information bytes\n", length);
 
   return 0;
 
