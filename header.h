@@ -28,7 +28,8 @@
 #define RECEIVER 1
 
 #define DEBUG 1
-#define RETRANSMISSIONMAX 3
+#define RETRANSMISSION_MAX 3
+#define RETRANSMISSION_WAIT 3
 #include <stdlib.h>
 
 struct termios oldtio,newtio;

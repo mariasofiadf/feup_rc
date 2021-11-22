@@ -23,11 +23,11 @@ int llopen_transmitter (int fd){
 
   signal(SIGALRM,sig_handler); // Register signal handler
 
-  while (try < RETRANSMISSIONMAX)
+  while (try < RETRANSMISSION_MAX)
   {
     printf("1");
     if(flag){
-      alarm(3);
+      alarm(RETRANSMISSION_WAIT);
       flag = 0;
       send_set(fd);
       if(wait_ua(fd) == 0){
@@ -98,7 +98,7 @@ int wait_ua(int fd){
             break;
         case BCC_OK:
             if(rcv == FLAG){
-              try = RETRANSMISSIONMAX;
+              try = RETRANSMISSION_MAX;
               flag = 1;
               if(DEBUG)
                 printf("Received UA message\n");
@@ -166,7 +166,7 @@ int wait_rr(int fd){
               C_COUNT = C_ONE;
             else C_COUNT = C_ZERO;
             if(rcv == FLAG){
-              try = RETRANSMISSIONMAX;
+              try = RETRANSMISSION_MAX;
               flag = 1;
               if(DEBUG)
                 printf("Received RR message\n");
@@ -228,11 +228,12 @@ int send_info(int fd, unsigned char * buffer, int length){
   //printf("BCC1:%d\n", i_message[3]);
   i_message[stuffed_size+3] = FLAG;
 
-
   send_trama(fd, i_message, stuffed_size+4);
 
   if(DEBUG)
     printf("Sent %i information bytes\n", length);
+
+  return 0;
 
 }
 
@@ -242,10 +243,10 @@ int llwrite(int fd, unsigned char * buffer, int length){
   signal(SIGALRM,sig_handler); // Register signal handler
   flag = 1; try = 0;
 
-  while (try < RETRANSMISSIONMAX)
+  while (try < RETRANSMISSION_MAX)
   {
     if(flag){
-      alarm(3);
+      alarm(RETRANSMISSION_WAIT);
       flag = 0;
       send_info(fd, buffer, length); //send_info
       int r = wait_rr(fd);
@@ -257,7 +258,7 @@ int llwrite(int fd, unsigned char * buffer, int length){
     }
   }
 
-
+  return 0;
 }
 
 
@@ -347,14 +348,14 @@ int llclose(int fd){
 
   signal(SIGALRM,sig_handler); // Register signal handler
  
-  while (try < RETRANSMISSIONMAX)
+  while (try < RETRANSMISSION_MAX)
   {
     if(flag){
-      alarm(3);
+      alarm(RETRANSMISSION_WAIT);
       flag = 0;
       send_disc(fd);
       if(wait_disc(fd) == 0)
-        try = RETRANSMISSIONMAX;
+        try = RETRANSMISSION_MAX;
     }
   }
 
@@ -369,4 +370,6 @@ int llclose(int fd){
   }
 
   close(fd);
+
+  return 0;
 }
