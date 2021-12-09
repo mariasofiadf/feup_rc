@@ -10,7 +10,8 @@
 
 #include "protocol.h"
 
-unsigned short int MAX_DATA = 32000;
+unsigned short int MAX_DATA = 5000;
+unsigned long int filesize;
 
 #define VERBOSE 1
 
@@ -125,7 +126,7 @@ int wait_ctrl_packet(int fd){
 
     if(cpacket[0]!=START) //START EXPECTED
         return 1;
-    unsigned long int filesize = 0;
+    filesize = 0;
     int i = 0;
     if(cpacket[1] == FILE_SIZE){//cpacket[1]->T
         for(; i < cpacket[2]; i++){ //cpacket[2]->L
@@ -148,12 +149,13 @@ int wait_data_packets(int fd, int file){
     unsigned char dpacket[MAX_DATA+4];
 
     unsigned char * ptr = &dpacket;
-    int r=0, counter = 0, data_rcv = 0;
+    int r=0, counter = 0, data_rcv = 0, byte_counter = 0;
     while ( (r = llread(fd, &dpacket,MAX_DATA+4)) >= 0)
     {
         if(dpacket[0] == END)
             continue;
         data_rcv = (dpacket[2]<<8) | (dpacket[3]);
+        byte_counter += data_rcv;
         if(VERBOSE) printf("[App] Received %d data bytes\n",data_rcv);
         counter = dpacket[1];
         if(r > 0){
@@ -161,6 +163,10 @@ int wait_data_packets(int fd, int file){
             memset(&dpacket, '\0', MAX_DATA+4);
         }
     }
+    if(byte_counter == filesize)
+        printf("[App] Received %d bytes as expected\n", byte_counter);
+    else printf("[App] Only %d bytes\n", byte_counter);
+    return byte_counter;
 }
 
 int transmitter(){ 
