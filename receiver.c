@@ -171,6 +171,12 @@ wait_info(int fd, unsigned char *buffer, int size){
             int destuff_size = destuffing(stuffed, destuffed, count);
             if(destuffed[0] != a^c)//BCC1 check
                 state = START;
+            if(BCC1_ERROR_TEST){
+                if((random() % 100) < 10){ //1 in 10 chance of error
+                    state = START; count = 0;
+                    break;
+                }
+            }
             if((c == C_ONE && RR_COUNT==RR_ZERO)||(c == C_ZERO && RR_COUNT==RR_ONE)){
                 printf("[Protocol] Received %d repeated information bytes correctly\n", destuff_size-2);
                 return 0;
@@ -231,6 +237,8 @@ int llread(int fd, unsigned char *buffer, int size)
 {
 
     int r = wait_info(fd, buffer, size);
+    if(T_PROP_TEST)
+        usleep(150000);
 
     if(r>=0)
         send_rr(fd);

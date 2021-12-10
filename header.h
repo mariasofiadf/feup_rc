@@ -28,7 +28,10 @@
 #define RECEIVER 1
 
 #define DEBUG 1
-#define RETRANSMISSION_MAX 3
+#define BCC1_ERROR_TEST 0
+#define BCC2_ERROR_TEST 0
+#define T_PROP_TEST 0
+#define RETRANSMISSION_MAX 10
 #define RETRANSMISSION_WAIT 3
 #include <stdlib.h>
 

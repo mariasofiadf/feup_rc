@@ -10,7 +10,7 @@
 
 #include "protocol.h"
 
-unsigned short int MAX_DATA = 5000;
+unsigned short int MAX_DATA = 1000;
 unsigned long int filesize;
 
 #define VERBOSE 1

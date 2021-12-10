@@ -40,7 +40,6 @@ int port_connect(char* port){
   newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
   newtio.c_iflag = IGNPAR;
   newtio.c_oflag = 0;
-
   /* set input mode (non-canonical, no echo,...) */
   newtio.c_lflag = 0;
 

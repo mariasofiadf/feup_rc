@@ -193,21 +193,22 @@ int send_info(int fd, unsigned char * buffer, int length){
 
   int to_stuff_size = length+2;
   unsigned char to_stuff[to_stuff_size];
+
   to_stuff[0] = A_ISSUER^C_COUNT; //BCC1
 
-  
+
   for( int i=0; i < length; i++){
     bcc2 = bcc2 ^ buffer[i];
     to_stuff[i+1] = buffer[i];
     //i_message[i+4] = buffer[i];  
   }
   
-  //FORCE BCC2 ERRORS TO CREATE REJ ON RECEIVER
-  //FOR TESTING
-  // if((random() % 10) == 0){ //1 in 10 chance of error
-  //   bcc2 = !bcc2;
-  //   memset(&to_stuff, '3',length/2);
-  // }
+  if(BCC2_ERROR_TEST){
+    if((random() % 100) < 20){ //1 in 10 chance of error
+      bcc2 = !bcc2;
+      memset(&to_stuff, '3',length/2);
+    }
+  }
 
 
   to_stuff[length+1]=bcc2;
